@@ -43,6 +43,10 @@ class Config:
             console.print(f"[red]Unity executable not found at:[/] {self.unity_path}")
             console.print("[yellow]Please check your path in .env file[/]")
             sys.exit(1)
+        
+        # Extract Unity version from executable path and validate
+        self.unity_exe_version = self._extract_unity_version_from_path(self.unity_path)
+        self._validate_unity_versions()
     
     def print_configuration(self):
         """Display the detected configuration in a nice table."""
@@ -54,7 +58,14 @@ class Config:
         table.add_row("Root", str(self.project_root))
         table.add_row("Company", self.company_name)
         table.add_row("Version", self.project_version)
-        table.add_row("Unity", self.unity_version)
+        table.add_row("Project Unity Version", self.unity_version)
+        
+        # Show Unity executable with version if detected
+        unity_exe_display = str(self.unity_path)
+        if self.unity_exe_version != "Unknown" and self.unity_exe_version != self.unity_version:
+            unity_exe_display = f"{self.unity_path} [yellow](v{self.unity_exe_version})[/]"
+        
+        table.add_row("Unity Executable", unity_exe_display)
         table.add_row("Bundle ID", self.bundle_identifier)
         
         console.print(table)
@@ -182,6 +193,31 @@ class Config:
             console.print('[green]UNITY_PATH="/Applications/Unity/Hub/Editor/2021.3.16f1/Unity.app/Contents/MacOS/Unity"[/]')
         else:
             console.print('[green]UNITY_PATH="/home/username/Unity/Hub/Editor/2021.3.16f1/Editor/Unity"[/]')
+    
+    def _extract_unity_version_from_path(self, unity_path: str) -> str:
+        """Extract Unity version from the executable path."""
+        # Try to find version pattern in path (e.g., 2021.3.16f1)
+        import re
+        version_pattern = r'(\d{4}\.\d+\.\d+[a-z]\d+)'
+        match = re.search(version_pattern, unity_path)
+        if match:
+            return match.group(1)
+        return "Unknown"
+    
+    def _validate_unity_versions(self):
+        """Validate that Unity executable version matches project version."""
+        if self.unity_exe_version != "Unknown" and self.unity_exe_version != self.unity_version:
+            console.print(f"\n[yellow]⚠️  Unity Version Mismatch Detected![/]")
+            console.print(f"   Project expects: [cyan]{self.unity_version}[/]")
+            console.print(f"   Using executable: [cyan]{self.unity_exe_version}[/]")
+            console.print(f"   Path: [dim]{self.unity_path}[/]")
+            console.print(f"\n[yellow]This may cause compatibility issues. Consider using Unity {self.unity_version}[/]")
+            console.print("[dim]Press Enter to continue anyway, or Ctrl+C to cancel...[/]")
+            try:
+                input()
+            except KeyboardInterrupt:
+                console.print("\n[red]Build cancelled by user[/]")
+                sys.exit(1)
     
     def get_build_output_path(self, platform: str, extension: str = "") -> Path:
         """Get the output path for a specific platform build with version and timestamp."""
