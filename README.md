@@ -141,8 +141,10 @@ Use platform-specific scripts for even faster builds:
 ```batch
 # Windows batch files
 scripts\build-windows.bat
+scripts\build-mac.bat
 scripts\build-android.bat
 scripts\build-webgl.bat
+scripts\build-ios.bat
 scripts\build-all.bat
 ```
 
@@ -151,8 +153,10 @@ scripts\build-all.bat
 # Shell scripts
 chmod +x scripts/*.sh  # Make executable (first time only)
 ./scripts/build-windows.sh
+./scripts/build-mac.sh
 ./scripts/build-android.sh
 ./scripts/build-webgl.sh
+./scripts/build-ios.sh
 ./scripts/build-all.sh
 ```
 
@@ -194,14 +198,14 @@ The system automatically detects:
 
 No manual configuration needed!
 
-| Setting | Source | Example |
-|---------|---------|---------|
-| Project Name | ProjectSettings.asset | "My Awesome Game" |
-| Company Name | ProjectSettings.asset | "Indie Studio" |
-| Project Version | ProjectSettings.asset | "1.0.0" |
-| Unity Version | ProjectVersion.txt | "2021.3.16f1" |
-| Bundle ID | ProjectSettings.asset | "com.IndieStudio.MyAwesomeGame" |
-| Project Root | Script location | Finds Assets/ProjectSettings folders |
+| Setting         | Source                | Example                              |
+|-----------------|-----------------------|--------------------------------------|
+| Project Name    | ProjectSettings.asset | "My Awesome Game"                    |
+| Company Name    | ProjectSettings.asset | "Indie Studio"                       |
+| Project Version | ProjectSettings.asset | "1.0.0"                              |
+| Unity Version   | ProjectVersion.txt    | "2021.3.16f1"                        |
+| Bundle ID       | ProjectSettings.asset | "com.IndieStudio.MyAwesomeGame"      |
+| Project Root    | Script location       | Finds Assets/ProjectSettings folders |
 
 ### Understanding Unity Versions
 
@@ -310,8 +314,8 @@ Contributions welcome! Please:
 ## Support
 
 - [GitHub Issues](https://github.com/angrysharkstudio/Unity-Python-Build-Automation/issues)
-- [Blog Tutorial](https://angrysharkstudio.com/blog/python-unity-build-automation-tutorial)
+- [Blog Tutorial](https://angrysharkstudio.com/blog/python-unity-build-automation-tutorial?utm_source=github&utm_medium=readme&utm_campaign=unity_build_automation)
 
 ---
 
-Made with Python and Unity by [Angry Shark Studio](https://angrysharkstudio.com)
+Made with Python and Unity by [Angry Shark Studio](https://www.angry-shark-studio.com?utm_source=github&utm_medium=readme&utm_campaign=unity_build_automation)
