@@ -1,0 +1,227 @@
+# Unity Build Automation Troubleshooting Guide
+
+## How Build Output Paths Work
+
+**Important**: Unity and Python handle the build output paths in a coordinated way:
+
+1. **Unity builds to**: `Builds/Platform/Version/` (e.g., `Builds/Windows/1.0.0/MyGame.exe`)
+2. **Python expects**: Unity output at the version folder
+3. **Python moves to**: Timestamped folder (e.g., `Builds/Windows/1.0.0_31-08-2025_14-30/MyGame.exe`)
+
+This approach ensures:
+- Unity uses simple, predictable paths
+- Python adds timestamps to prevent overwrites
+- No synchronization issues between Unity and Python timestamps
+
+## Common Build Failures
+
+### 1. Build Output Not Found
+
+**Symptom**: Python script reports "build failed" even though Unity might have succeeded.
+
+**Solution**: We've updated `CommandLineBuild.cs` to include timestamps in the output paths to match what the Python script expects. Make sure to:
+1. Copy the updated `CommandLineBuild.cs` to your Unity project's `Assets/Scripts/Editor/` folder
+2. The output paths now include timestamps: `Builds/Platform/Version_Timestamp/GameName`
+
+### 2. No Scenes in Build Settings
+
+**Symptom**: Build fails with "No scenes in Build Settings" error.
+
+**Solution**:
+1. Open Unity
+2. Go to File → Build Settings
+3. Add your scene(s) to the "Scenes In Build" list
+4. Make sure at least one scene is checked/enabled
+5. Save the project
+
+### 3. Android Build Failures
+
+**Common Issues**:
+
+#### Android SDK Not Found
+- Set the `ANDROID_HOME` environment variable to your Android SDK location
+- Example Windows: `C:\Users\YourName\AppData\Local\Android\Sdk`
+- Example macOS: `/Users/YourName/Library/Android/sdk`
+- Example Linux: `/home/YourName/Android/Sdk`
+
+#### Unity Android Build Support Not Installed
+- Open Unity Hub
+- Go to Installs
+- Click the gear icon on your Unity version
+- Add modules → Android Build Support (including Android SDK & NDK Tools, OpenJDK)
+
+#### Minimum API Level Issues
+- In Unity: File → Build Settings → Player Settings
+- Under Android settings, check "Minimum API Level"
+- Set to API Level 21 or higher for most modern apps
+
+### 4. Windows Build Failures
+
+**Common Issues**:
+
+#### Missing Visual Studio Build Tools
+- Windows builds require Visual Studio or Build Tools for Visual Studio
+- Download from: https://visualstudio.microsoft.com/downloads/
+- Install at least "Game development with Unity" workload
+
+#### Antivirus Blocking Build
+- Some antivirus software may block Unity from creating executables
+- Temporarily disable antivirus or add Unity and your project folder to exclusions
+
+### 5. Unity Path Issues
+
+**Symptom**: "Unity path not found" error
+
+**Solution**:
+1. Verify Unity is installed via Unity Hub
+2. Find the exact path to Unity executable:
+   - Windows: Usually `C:\Program Files\Unity\Hub\Editor\[version]\Editor\Unity.exe`
+   - macOS: Usually `/Applications/Unity/Hub/Editor/[version]/Unity.app/Contents/MacOS/Unity`
+   - Linux: Usually `/home/[user]/Unity/Hub/Editor/[version]/Editor/Unity`
+3. Update `.env` file with the correct path
+
+### 6. Script Compilation Errors
+
+**Symptom**: Build fails due to script errors
+
+**Solution**:
+1. Open your Unity project
+2. Check the Console window for any compilation errors (Window → General → Console)
+3. Fix any red errors before attempting to build
+4. Common issues:
+   - Missing TextMeshPro package (install via Package Manager)
+   - Script errors in your game code
+   - Missing dependencies
+
+### 7. Build Log Location
+
+Build logs are saved in the `BuildAutomation` folder:
+- `build_windows.log`
+- `build_android.log`
+- `build_webgl.log`
+- `build_mac.log`
+
+Check these logs for detailed error messages.
+
+### 8. Project Settings Issues
+
+**Bundle Version Not Set**:
+- File → Build Settings → Player Settings
+- Set "Version" field (e.g., "1.0.0")
+
+**Product Name Not Set**:
+- File → Build Settings → Player Settings
+- Set "Product Name" field
+
+**Company Name Not Set**:
+- File → Build Settings → Player Settings
+- Set "Company Name" field
+
+### 9. Python Environment Issues
+
+**Missing Dependencies**:
+```bash
+cd BuildAutomation
+pip install -r requirements.txt
+```
+
+**Wrong Python Version**:
+- Requires Python 3.8 or newer
+- Check version: `python --version`
+
+### 10. WebGL Build Failures
+
+**"Error building player because build target was unsupported"**:
+This is the most common WebGL build error. Solutions:
+
+1. **Install WebGL Build Support**:
+   - Open Unity Hub
+   - Click gear icon on your Unity version
+   - Add modules → WebGL Build Support
+   - Verify installation at: `Unity/Editor/Data/PlaybackEngines/WebGLSupport`
+
+2. **Command Line Fix**:
+   - The script now includes `-buildTarget WebGL` parameter automatically
+   - This tells Unity to load WebGL module before building
+
+3. **Antivirus Issues**:
+   - Check if antivirus quarantined `MonoBleedingEdge`
+   - Add Unity installation to antivirus exceptions
+
+4. **Memory Requirements**:
+   - WebGL builds need 8GB+ RAM
+   - Close other applications during build
+   - Consider increasing virtual memory
+
+### 11. iOS Build Information
+
+**iOS builds have special requirements**:
+
+1. **Platform Requirements**:
+   - Must run on macOS (Xcode required)
+   - iOS Build Support module must be installed
+   - Valid Apple Developer account for device testing
+
+2. **Build Output**:
+   - Creates Xcode project, not final .ipa file
+   - Must open in Xcode to create final app
+   - Located in: `Builds/iOS/Version_Timestamp/`
+
+3. **Bundle Identifier**:
+   - Must be set in Player Settings
+   - Format: `com.yourcompany.yourproduct`
+   - Cannot use default `com.Company.ProductName`
+
+4. **Common Errors**:
+   - "iOS builds can only be created on macOS" - Running on Windows/Linux
+   - "iOS module not installed" - Add iOS Build Support in Unity Hub
+   - "Bundle Identifier not set" - Configure in Player Settings
+
+### 12. Quick Verification Steps
+
+Run this checklist before building:
+
+1. **Unity Project Check**:
+   ```bash
+   python -c "from unity_builder.config import Config; c = Config(); c.print_configuration()"
+   ```
+
+2. **Unity Path Check**:
+   ```bash
+   python -c "import os; print('Unity path exists:', os.path.exists(os.getenv('UNITY_PATH', 'not set')))"
+   ```
+
+3. **Project Structure Check**:
+   - Ensure `Assets/` folder exists
+   - Ensure `ProjectSettings/` folder exists
+   - Ensure at least one scene is in Build Settings
+
+4. **For Android Builds**:
+   ```bash
+   echo %ANDROID_HOME%  # Windows
+   echo $ANDROID_HOME   # macOS/Linux
+   ```
+
+### Getting More Help
+
+If you're still experiencing issues:
+
+1. Check the full build log in `BuildAutomation/build_[platform].log`
+2. Look for specific error messages in the Unity Console
+3. Verify all prerequisites are installed (Unity modules, SDKs, etc.)
+4. Create an issue on GitHub with:
+   - The error message
+   - Your Unity version
+   - Your operating system
+   - The build log contents
+
+### Debug Mode
+
+To see more detailed output, you can modify the Python script to show Unity's output:
+
+```python
+# In platforms.py, change capture_output=True to capture_output=False
+result = subprocess.run(cmd, capture_output=False, text=True)
+```
+
+This will show Unity's real-time output in your terminal.
