@@ -5,7 +5,7 @@
  * See LICENSE file for full license text
  *
  * This script provides command-line build methods for Unity automation.
- *
+ * Place this file in: Assets/Scripts/Editor/CommandLineBuild.cs
  */
 
 using System.IO;
@@ -17,7 +17,7 @@ using UnityEngine;
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedType.Global
 
-public class CommandLineBuild {
+public static class CommandLineBuild {
 
     // Get scenes from Build Settings (no hardcoding!)
     private static string[] GetScenePaths() {
@@ -32,6 +32,11 @@ public class CommandLineBuild {
         return PlayerSettings.productName;
     }
 
+    // Get bundle version from Player Settings
+    private static string GetBundleVersion() {
+        return PlayerSettings.bundleVersion;
+    }
+
     // Ensure the build directory exists
     private static void EnsureDirectoryExists(string filePath) {
         var directory = Path.GetDirectoryName(filePath);
@@ -44,7 +49,8 @@ public class CommandLineBuild {
 
     public static void BuildWindows() {
         var productName = GetProductName();
-        var outputPath = $"Builds/Windows/{productName}.exe";
+        var bundleVersion = GetBundleVersion();
+        var outputPath = $"Builds/Windows/{bundleVersion}/{productName}.exe";
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -53,7 +59,7 @@ public class CommandLineBuild {
             options = BuildOptions.None
         };
 
-        Debug.Log($"Building Windows: {productName}");
+        Debug.Log($"Building Windows: {productName} v{bundleVersion}");
         Debug.Log($"Scenes: {string.Join(", ", buildPlayerOptions.scenes)}");
         Debug.Log($"Output: {outputPath}");
 
@@ -72,7 +78,8 @@ public class CommandLineBuild {
 
     public static void BuildMac() {
         var productName = GetProductName();
-        var outputPath = $"Builds/Mac/{productName}.app";
+        var bundleVersion = GetBundleVersion();
+        var outputPath = $"Builds/Mac/{bundleVersion}/{productName}.app";
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -81,7 +88,7 @@ public class CommandLineBuild {
             options = BuildOptions.None
         };
 
-        Debug.Log($"Building Mac: {productName}");
+        Debug.Log($"Building Mac: {productName} v{bundleVersion}");
         EnsureDirectoryExists(outputPath);
 
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
@@ -94,7 +101,8 @@ public class CommandLineBuild {
 
     public static void BuildAndroid() {
         var productName = GetProductName();
-        var outputPath = $"Builds/Android/{productName}.apk";
+        var bundleVersion = GetBundleVersion();
+        var outputPath = $"Builds/Android/{bundleVersion}/{productName}.apk";
 
         // Note: Android signing should be configured in Player Settings
         // or passed via command line arguments for production builds
@@ -106,7 +114,7 @@ public class CommandLineBuild {
             options = BuildOptions.None
         };
 
-        Debug.Log($"Building Android: {productName}");
+        Debug.Log($"Building Android: {productName} v{bundleVersion}");
         EnsureDirectoryExists(outputPath);
 
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
@@ -119,7 +127,8 @@ public class CommandLineBuild {
 
     public static void BuildWebGL() {
         var productName = GetProductName();
-        var outputPath = $"Builds/WebGL/{productName}";
+        var bundleVersion = GetBundleVersion();
+        var outputPath = $"Builds/WebGL/{bundleVersion}/{productName}";
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -128,7 +137,7 @@ public class CommandLineBuild {
             options = BuildOptions.None
         };
 
-        Debug.Log($"Building WebGL: {productName}");
+        Debug.Log($"Building WebGL: {productName} v{bundleVersion}");
         EnsureDirectoryExists(outputPath);
 
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
@@ -148,8 +157,9 @@ public class CommandLineBuild {
             EditorApplication.Exit(1);
         }
 
-        Debug.Log("Build setup verified:");
+        Debug.Log($"Build setup verified:");
         Debug.Log($"- Product Name: {GetProductName()}");
+        Debug.Log($"- Bundle Version: {GetBundleVersion()}");
         Debug.Log($"- Scenes ({scenes.Length}): {string.Join(", ", scenes)}");
         Debug.Log($"- Company Name: {PlayerSettings.companyName}");
         Debug.Log($"- Bundle ID: {PlayerSettings.applicationIdentifier}");
