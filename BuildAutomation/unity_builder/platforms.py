@@ -177,6 +177,24 @@ class PlatformBuilder:
                 else:
                     progress.stop()
                     console.print(f"[red]{platform_info['name']} build failed![/]")
+                    
+                    if result.returncode != 0:
+                        console.print(f"[red]Unity exited with error code: {result.returncode}[/]")
+                    
+                    if not unity_output_path.exists():
+                        console.print(f"[red]Expected output not found at: {unity_output_path}[/]")
+                        console.print(f"[yellow]Unity may have built to a different location.[/]")
+                        
+                        # Check if version folder exists without timestamp
+                        version_dir = unity_output_path.parent
+                        if version_dir.exists():
+                            console.print(f"[yellow]Found version directory: {version_dir}[/]")
+                            files = list(version_dir.iterdir())
+                            if files:
+                                console.print("[yellow]Contents:[/]")
+                                for f in files[:5]:  # Show first 5 files
+                                    console.print(f"  - {f.name}")
+                    
                     console.print(f"[yellow]Check log: BuildAutomation/build_{platform_name}.log[/]")
                     
                     # Try to show error from log
