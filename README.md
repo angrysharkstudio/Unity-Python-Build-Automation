@@ -171,6 +171,11 @@ Builds/
         └── MyGame.app
 ```
 
+**How timestamp folders work:**
+1. Unity builds to a simple version folder (e.g., `Builds/Windows/1.0.0/`)
+2. Python automatically moves the build to a timestamped folder (e.g., `Builds/Windows/1.0.0_31-08-2025_14-30/`)
+3. This prevents overwriting when building the same version multiple times
+
 ## Auto-Detection Features
 
 The system automatically detects:
@@ -182,14 +187,14 @@ The system automatically detects:
 
 No manual configuration needed!
 
-| Setting | Source | Example |
-|---------|---------|---------|
-| Project Name | ProjectSettings.asset | "My Awesome Game" |
-| Company Name | ProjectSettings.asset | "Indie Studio" |
-| Project Version | ProjectSettings.asset | "1.0.0" |
-| Unity Version | ProjectVersion.txt | "2021.3.16f1" |
-| Bundle ID | ProjectSettings.asset | "com.IndieStudio.MyAwesomeGame" |
-| Project Root | Script location | Finds Assets/ProjectSettings folders |
+| Setting         | Source                | Example                              |
+|-----------------|-----------------------|--------------------------------------|
+| Project Name    | ProjectSettings.asset | "My Awesome Game"                    |
+| Company Name    | ProjectSettings.asset | "Indie Studio"                       |
+| Project Version | ProjectSettings.asset | "1.0.0"                              |
+| Unity Version   | ProjectVersion.txt    | "2021.3.16f1"                        |
+| Bundle ID       | ProjectSettings.asset | "com.IndieStudio.MyAwesomeGame"      |
+| Project Root    | Script location       | Finds Assets/ProjectSettings folders |
 
 ## HTML Build Reports
 
@@ -200,6 +205,18 @@ After each build session, an HTML report is generated:
 - Version information
 
 Find reports in: `BuildAutomation/build_report.html`
+
+## CI/CD Integration
+
+Perfect for continuous integration pipelines:
+
+```yaml
+# Example GitHub Actions workflow
+- name: Build Unity Project
+  run: |
+    cd BuildAutomation
+    python build_cli.py --all
+```
 
 Exit codes:
 - 0: At least one build succeeded
@@ -219,14 +236,14 @@ Exit codes:
 ### WebGL Builds
 - Requires significant memory (8GB+ recommended)
 - Build times are longer than other platforms
-- Creates a folder instead of single file
+- Creates a folder instead of a single file
 
 ## Troubleshooting
 
 ### Unity Path Not Found
-- Check `.env` file exists and contains correct path
+- Check `.env` file exists and contains a correct path
 - Verify Unity installation location in Unity Hub
-- Path must point to Unity executable, not just installation folder
+- Path must point to Unity executable, not just the installation folder
 
 ### Build Fails Silently
 Check log files in `BuildAutomation/`:
@@ -236,9 +253,9 @@ Check log files in `BuildAutomation/`:
 - `build_mac.log`
 
 Common issues:
-- Scene not added to Build Settings
+- Scene isn't added to Build Settings
 - Missing Android SDK for Android builds
-- Script compilation errors in Unity project
+- Script compilation errors in a Unity project
 
 ### Permission Denied (macOS/Linux)
 ```bash
@@ -248,9 +265,9 @@ chmod +x scripts/*.sh
 
 ## License
 
-MIT License - Copyright (c) 2025 Angry Shark Studio
+MIT License - Copyright © 2025 Angry Shark Studio
 
-See LICENSE file for details.
+See the LICENSE file for details.
 
 ## Contributing
 
@@ -262,7 +279,7 @@ Contributions welcome! Please:
 ## Support
 
 - [GitHub Issues](https://github.com/angrysharkstudio/Unity-Python-Build-Automation/issues)
-- [Blog Tutorial](https://angrysharkstudio.com/blog/python-unity-build-automation-tutorial)
+- [Blog Tutorial](https://www.angry-shark-studio.com/blog/python-unity-build-automation-tutorial)
 
 ---
 
