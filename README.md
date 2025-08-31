@@ -1,92 +1,186 @@
-# Unity Build Automation - Zero Configuration
+# Unity Build Automation with Python
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Unity 2021.3+](https://img.shields.io/badge/Unity-2021.3+-black.svg)](https://unity.com/)
 
-Automate Unity builds for multiple platforms with zero configuration! This Python script automatically detects your Unity project settings and builds for Windows, Mac, Android, and WebGL with a single command.
+A zero-configuration Python automation system for building Unity projects across multiple platforms. Save hours of manual work with a single command!
 
-## ✨ Features
+## Features
 
-- **Zero Configuration**: Automatically detects project name, company, Unity version, and more
-- **Multi-Platform**: Build for Windows, Mac, Android, and WebGL
-- **Smart Detection**: Finds Unity project root, reads settings from ProjectSettings.asset
-- **Version-Based Output**: Builds organized in version folders (e.g., `Builds/Windows/1.0.0/`)
-- **Beautiful Console**: Rich formatting with colors, progress bars, and tables
-- **Interactive Menu**: Choose what to build with a simple menu
-- **Modular Architecture**: Clean Python package structure for easy extension
-- **Comprehensive Reports**: Enhanced HTML build reports with version tracking
-- **Platform Checking**: Automatically skips unavailable platforms with helpful messages
-- **Error Handling**: Clear error messages with actionable solutions
-- **Modern Unity Code**: Uses TextMeshPro and proper C# patterns
+- **Zero Configuration**: Automatically detects project settings from Unity files
+- **Multi-Platform Builds**: Windows, macOS, Android, and WebGL support
+- **Beautiful Console UI**: Rich formatting with progress indicators
+- **Version Management**: Organizes builds by version and timestamp
+- **Build Reports**: Generates HTML reports with build statistics
+- **Command-Line Interface**: Non-interactive builds for CI/CD integration
+- **Cross-Platform**: Works on Windows, macOS, and Linux
 
-## 🚀 Quick Start
+## Requirements
 
-### 1. Copy Scripts to Your Unity Project
+- Unity 2021.3 LTS or newer
+- Python 3.8 or newer
+- TextMeshPro package (imported in Unity)
 
-Copy the `BuildAutomation` folder into your Unity project root:
+## Quick Start
+
+### 1. Setup
+
+Place the `BuildAutomation` folder inside your Unity project:
 
 ```
 YourUnityProject/
 ├── Assets/
 ├── ProjectSettings/
-├── BuildAutomation/         ← Add this folder
-│   ├── unity_builder/       # Python package
-│   │   ├── __init__.py
-│   │   ├── config.py        # Auto-detection logic
-│   │   ├── platforms.py     # Platform builds
-│   │   ├── reporter.py      # HTML reports
-│   │   ├── builder.py       # Main orchestration
-│   │   └── utils.py         # Utilities
-│   ├── build.py             # Entry point
-│   ├── .env.example         # Unity path template
-│   ├── requirements.txt     # Dependencies
-│   └── CommandLineBuild.cs  ← Copy to Assets/Scripts/Editor/
+├── BuildAutomation/        # Copy this folder here
+│   ├── build.py
+│   ├── build_cli.py
+│   ├── unity_builder/
+│   ├── scripts/
+│   └── requirements.txt
+└── Builds/                 # Build outputs will go here
 ```
 
-### 2. Copy Unity Build Script
-
-Copy `CommandLineBuild.cs` to your Unity project:
-```bash
-cp BuildAutomation/CommandLineBuild.cs Assets/Scripts/Editor/
-```
-
-### 3. Set Up Python Environment
+### 2. Install Dependencies
 
 ```bash
 cd YourUnityProject/BuildAutomation
 pip install -r requirements.txt
 ```
 
-### 4. Configure Unity Path
+### 3. Configure Unity Path
+
+Copy `.env.example` to `.env` and set your Unity installation path:
 
 ```bash
 cp .env.example .env
-# Edit .env and add your Unity installation path
 ```
 
-Example `.env` contents:
+Edit `.env`:
 ```
+# Windows example:
 UNITY_PATH="C:/Program Files/Unity/Hub/Editor/2021.3.16f1/Editor/Unity.exe"
+
+# macOS example:
+# UNITY_PATH="/Applications/Unity/Hub/Editor/2021.3.16f1/Unity.app/Contents/MacOS/Unity"
+
+# Linux example:
+# UNITY_PATH="/home/username/Unity/Hub/Editor/2021.3.16f1/Editor/Unity"
 ```
 
-### 5. Run the Build
+### 4. Add Unity Build Script
 
+Copy `CommandLineBuild.cs` to `Assets/Scripts/Editor/` in your Unity project. This script enables command-line builds.
+
+### 5. Run Your First Build
+
+Interactive mode:
 ```bash
 python build.py
 ```
 
-That's it! The script will auto-detect everything else.
+Non-interactive mode:
+```bash
+python build_cli.py windows
+```
 
-## 📋 Prerequisites
+## Usage Guide
 
-- Python 3.8 or higher
-- Unity 2021.3 LTS or newer
-- TextMeshPro package imported in Unity
-- Unity build support for desired platforms installed
-- For Android builds: Android SDK with `ANDROID_HOME` environment variable set
+### Interactive Mode
 
-## 🎯 What Gets Auto-Detected
+Run `python build.py` for an interactive menu:
+
+```
+Unity Build Automation
+Zero Configuration Edition
+
+What would you like to build?
+  1. Windows only
+  2. All platforms
+  3. Custom selection
+  4. Exit
+
+Enter your choice (1-4):
+```
+
+### Command-Line Mode
+
+Use `build_cli.py` for non-interactive builds:
+
+```bash
+# Build specific platform
+python build_cli.py windows
+python build_cli.py android
+python build_cli.py webgl
+
+# Build multiple platforms
+python build_cli.py windows android
+
+# Build all platforms
+python build_cli.py --all
+
+# Skip HTML report generation
+python build_cli.py windows --no-report
+
+# Show help
+python build_cli.py --help
+```
+
+### Quick Build Scripts
+
+Use platform-specific scripts for even faster builds:
+
+**Windows:**
+```batch
+# Windows batch files
+scripts\build-windows.bat
+scripts\build-android.bat
+scripts\build-webgl.bat
+scripts\build-all.bat
+```
+
+**macOS/Linux:**
+```bash
+# Shell scripts
+chmod +x scripts/*.sh  # Make executable (first time only)
+./scripts/build-windows.sh
+./scripts/build-android.sh
+./scripts/build-webgl.sh
+./scripts/build-all.sh
+```
+
+## Build Output Structure
+
+Builds are organized by platform, version, and timestamp:
+
+```
+Builds/
+├── Windows/
+│   └── 1.0.0_31-08-2025_14-30/
+│       └── MyGame.exe
+├── Android/
+│   └── 1.0.0_31-08-2025_14-30/
+│       └── MyGame.apk
+├── WebGL/
+│   └── 1.0.0_31-08-2025_14-30/
+│       └── MyGame/
+│           ├── index.html
+│           └── Build/
+└── Mac/
+    └── 1.0.0_31-08-2025_14-30/
+        └── MyGame.app
+```
+
+## Auto-Detection Features
+
+The system automatically detects:
+- Project name from `ProjectSettings.asset`
+- Company name and bundle identifier
+- Unity version from `ProjectVersion.txt`
+- Build version number
+- Scene files from Build Settings
+
+No manual configuration needed!
 
 | Setting | Source | Example |
 |---------|---------|---------|
@@ -97,95 +191,79 @@ That's it! The script will auto-detect everything else.
 | Bundle ID | ProjectSettings.asset | "com.IndieStudio.MyAwesomeGame" |
 | Project Root | Script location | Finds Assets/ProjectSettings folders |
 
-## 📁 Unity Setup
+## HTML Build Reports
 
-The included `CommandLineBuild.cs` file provides all the build methods needed for automation. It features:
-
-- **Automatic scene detection** from Build Settings
-- **Dynamic product naming** from Player Settings
-- **Error handling** with proper exit codes
-- **Directory creation** for build outputs
-- **Support for all platforms** (Windows, Mac, Android, WebGL)
-
-The script reads all configuration from your Unity project settings - no hardcoding required!
-
-## 🛠️ Configuration
-
-The only configuration needed is your Unity installation path in the `.env` file. Everything else is automatic!
-
-### Finding Your Unity Path
-
-**Windows:**
-```
-C:/Program Files/Unity/Hub/Editor/[version]/Editor/Unity.exe
-```
-
-**macOS:**
-```
-/Applications/Unity/Hub/Editor/[version]/Unity.app/Contents/MacOS/Unity
-```
-
-**Linux:**
-```
-/home/username/Unity/Hub/Editor/[version]/Editor/Unity
-```
-
-## 🎨 Beautiful Console Output
-
-With Rich integration, you'll see:
-- 🌈 Colored text and emojis for better readability
-- ⏳ Progress bars and spinners during builds
-- 📊 Formatted tables for build summaries
-- 🎯 Clear error messages with solutions
-
-Example output:
-```
-┌─ Unity Build Configuration ──────────────────────────┐
-│ 🎮 Project     My Awesome Game                       │
-│ 📦 Version     1.0.0                                 │
-│ 🔧 Unity       2021.3.16f1                          │
-└──────────────────────────────────────────────────────┘
-
-🏗️  Building for Windows...
-Output: Builds/Windows/1.0.0/MyAwesomeGame.exe
-✅ Windows build completed!
-   Time: 45.2 seconds
-   Size: 23.4 MB
-   Version: 1.0.0
-```
-
-## 📊 Build Reports
-
-After building, find your enhanced HTML report at:
-```
-BuildAutomation/build_report.html
-```
-
-The report includes:
-- Project version prominently displayed
-- Build status for each platform
+After each build session, an HTML report is generated:
 - Build times and file sizes
-- Version-organized output paths
-- Professional styling
+- Success/failure status
+- Platform-specific details
+- Version information
 
-## 🤝 Contributing
+Find reports in: `BuildAutomation/build_report.html`
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Exit codes:
+- 0: At least one build succeeded
+- 1: All builds failed or error occurred
 
-## 📄 License
+## Platform-Specific Notes
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Android Builds
+- Requires Android SDK installed
+- Set `ANDROID_HOME` environment variable
+- Unity Android build support must be installed
 
-## 🙏 Acknowledgments
+### macOS Builds
+- Only available when running on macOS
+- Requires Xcode command line tools
 
-- Created as part of a Unity automation tutorial
-- Inspired by the need for simpler Unity build workflows
-- Thanks to the Unity and Python communities
+### WebGL Builds
+- Requires significant memory (8GB+ recommended)
+- Build times are longer than other platforms
+- Creates a folder instead of single file
 
-## 📚 Learn More
+## Troubleshooting
 
-Check out the full tutorial: [Python for Unity Developers: Automate Your Builds in 5 Steps](https://angrysharkstudio.com/blog/python-unity-build-automation-tutorial)
+### Unity Path Not Found
+- Check `.env` file exists and contains correct path
+- Verify Unity installation location in Unity Hub
+- Path must point to Unity executable, not just installation folder
+
+### Build Fails Silently
+Check log files in `BuildAutomation/`:
+- `build_windows.log`
+- `build_android.log`
+- `build_webgl.log`
+- `build_mac.log`
+
+Common issues:
+- Scene not added to Build Settings
+- Missing Android SDK for Android builds
+- Script compilation errors in Unity project
+
+### Permission Denied (macOS/Linux)
+```bash
+chmod +x /path/to/Unity
+chmod +x scripts/*.sh
+```
+
+## License
+
+MIT License - Copyright (c) 2025 Angry Shark Studio
+
+See LICENSE file for details.
+
+## Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## Support
+
+- [GitHub Issues](https://github.com/angrysharkstudio/Unity-Python-Build-Automation/issues)
+- [Blog Tutorial](https://angrysharkstudio.com/blog/python-unity-build-automation-tutorial)
 
 ---
 
-Made with ❤️ for Unity developers who hate repetitive tasks
+Made with Python and Unity by [Angry Shark Studio](https://www.angry-shark-studio.com/)
