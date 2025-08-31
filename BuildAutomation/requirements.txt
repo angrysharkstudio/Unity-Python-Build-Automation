@@ -1,0 +1,12 @@
+﻿# Unity Build Automation Python Dependencies
+# Install with: pip install -r requirements.txt
+
+python-dotenv==1.0.0  # For loading Unity path from .env file
+rich==13.7.0          # For beautiful console output with icons, colors and formatting (Markdown)
+click==8.1.7          # For command-line interface
+
+# Optional dependencies for future enhancements:
+# schedule>=1.2.0     # For scheduling automatic builds
+# requests>=2.31.0    # For webhooks and notifications
+# slack-sdk>=3.19.0   # For Slack notifications
+# discord.py>=2.3.0   # For Discord notifications
