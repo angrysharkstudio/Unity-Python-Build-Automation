@@ -48,11 +48,34 @@ public class CommandLineBuild {
         }
     }
 
+    // Get output path from command line or use default
+    private static string GetOutputPath(string platform, string productName, string bundleVersion, string extension) {
+        // Check if an output path was passed via the command line
+        var args = Environment.GetCommandLineArgs();
+
+        for (var i = 0; i < args.Length - 1; i++) {
+            if (args[i] == "-buildPath" && i + 1 < args.Length) {
+                var customPath = args[i + 1];
+                Debug.Log($"Using custom build path from command line: {customPath}");
+
+                return customPath;
+            }
+        }
+
+        // Default behavior: Use a simple version folder without timestamp
+        // The Python script will handle finding the most recent build
+        var outputPath = $"Builds/{platform}/{bundleVersion}/{productName}{extension}";
+        Debug.Log($"Using default build path: {outputPath}");
+
+        return outputPath;
+    }
+
     public static void BuildWindows() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
-        var outputPath = $"Builds/Windows/{bundleVersion}_{timestamp}/{productName}.exe";
+
+        // Get an output path from command line arguments
+        var outputPath = GetOutputPath("Windows", productName, bundleVersion, ".exe");
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -81,8 +104,9 @@ public class CommandLineBuild {
     public static void BuildMac() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
-        var outputPath = $"Builds/Mac/{bundleVersion}_{timestamp}/{productName}.app";
+
+        // Get an output path from command line arguments
+        var outputPath = GetOutputPath("Mac", productName, bundleVersion, ".app");
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -105,8 +129,9 @@ public class CommandLineBuild {
     public static void BuildAndroid() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
-        var outputPath = $"Builds/Android/{bundleVersion}_{timestamp}/{productName}.apk";
+
+        // Get an output path from command line arguments
+        var outputPath = GetOutputPath("Android", productName, bundleVersion, ".apk");
 
         // Note: Android signing should be configured in Player Settings
         // or passed via command line arguments for production builds
@@ -132,8 +157,9 @@ public class CommandLineBuild {
     public static void BuildWebGL() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
-        var outputPath = $"Builds/WebGL/{bundleVersion}_{timestamp}/{productName}";
+
+        // Get an output path from command line arguments
+        var outputPath = GetOutputPath("WebGL", productName, bundleVersion, "");
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -162,7 +188,7 @@ public class CommandLineBuild {
             EditorApplication.Exit(1);
         }
 
-        Debug.Log($"Build setup verified:");
+        Debug.Log("Build setup verified:");
         Debug.Log($"- Product Name: {GetProductName()}");
         Debug.Log($"- Bundle Version: {GetBundleVersion()}");
         Debug.Log($"- Scenes ({scenes.Length}): {string.Join(", ", scenes)}");
