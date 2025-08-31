@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Unity Build Automation - Command Line Build Script
  *
  * MIT License - Copyright (c) 2025 Angry Shark Studio
@@ -8,6 +8,7 @@
  * Place this file in: Assets/Scripts/Editor/CommandLineBuild.cs
  */
 
+using System;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -17,7 +18,7 @@ using UnityEngine;
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedType.Global
 
-public static class CommandLineBuild {
+public class CommandLineBuild {
 
     // Get scenes from Build Settings (no hardcoding!)
     private static string[] GetScenePaths() {
@@ -50,7 +51,8 @@ public static class CommandLineBuild {
     public static void BuildWindows() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var outputPath = $"Builds/Windows/{bundleVersion}/{productName}.exe";
+        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
+        var outputPath = $"Builds/Windows/{bundleVersion}_{timestamp}/{productName}.exe";
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -79,7 +81,8 @@ public static class CommandLineBuild {
     public static void BuildMac() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var outputPath = $"Builds/Mac/{bundleVersion}/{productName}.app";
+        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
+        var outputPath = $"Builds/Mac/{bundleVersion}_{timestamp}/{productName}.app";
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -102,7 +105,8 @@ public static class CommandLineBuild {
     public static void BuildAndroid() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var outputPath = $"Builds/Android/{bundleVersion}/{productName}.apk";
+        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
+        var outputPath = $"Builds/Android/{bundleVersion}_{timestamp}/{productName}.apk";
 
         // Note: Android signing should be configured in Player Settings
         // or passed via command line arguments for production builds
@@ -128,7 +132,8 @@ public static class CommandLineBuild {
     public static void BuildWebGL() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
-        var outputPath = $"Builds/WebGL/{bundleVersion}/{productName}";
+        var timestamp = DateTime.Now.ToString("dd-MM-yyyy_HH-mm");
+        var outputPath = $"Builds/WebGL/{bundleVersion}_{timestamp}/{productName}";
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
