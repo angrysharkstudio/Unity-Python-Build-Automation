@@ -202,6 +202,40 @@ Run this checklist before building:
    echo $ANDROID_HOME   # macOS/Linux
    ```
 
+### 13. Unity Version Mismatch Issues
+
+**Symptom**: Warning about Unity version mismatch, or builds failing with compatibility errors.
+
+**Understanding the Issue**:
+- **Project Unity Version**: Version from `ProjectSettings/ProjectVersion.txt` (what your project expects)
+- **Unity Executable Version**: Version extracted from your `.env` UNITY_PATH (what you're building with)
+
+**When Version Mismatch is OK**:
+- Minor updates within the same major version (2021.3.16f1 → 2021.3.18f1)
+- Using newer Unity to build older projects (usually works)
+- LTS to LTS migrations that are well-tested
+
+**When Version Mismatch Causes Problems**:
+- Major version differences (2020.x → 2022.x)
+- Beta/Alpha versions mixing with stable
+- API changes between versions affecting your scripts
+
+**Solutions**:
+1. **Install Matching Unity Version**:
+   ```bash
+   # The script shows which version is expected
+   # Install that specific version via Unity Hub
+   ```
+
+2. **Update Project to Newer Unity**:
+   - Open a project in a newer Unity version
+   - Let Unity upgrade the project
+   - Check that everything still works
+
+3. **Override Warning** (if you know it's safe):
+   - The script will pause and let you continue anyway
+   - Press Enter to proceed with the version mismatch
+
 ### Getting More Help
 
 If you're still experiencing issues:
@@ -209,9 +243,10 @@ If you're still experiencing issues:
 1. Check the full build log in `BuildAutomation/build_[platform].log`
 2. Look for specific error messages in the Unity Console
 3. Verify all prerequisites are installed (Unity modules, SDKs, etc.)
-4. Create an issue on GitHub with:
+4. Check Unity versions: Compare a project version with an executable version
+5. Create an issue on GitHub with:
    - The error message
-   - Your Unity version
+   - Your Unity version (both project and executable)
    - Your operating system
    - The build log contents
 
