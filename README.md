@@ -9,12 +9,14 @@ A zero-configuration Python automation system for building Unity projects across
 ## Features
 
 - **Zero Configuration**: Automatically detects project settings from Unity files
-- **Multi-Platform Builds**: Windows, macOS, Android, and WebGL support
+- **Multi-Platform Builds**: Windows, macOS, Android, WebGL, and iOS support
 - **Beautiful Console UI**: Rich formatting with progress indicators
 - **Version Management**: Organizes builds by version and timestamp
 - **Build Reports**: Generates HTML reports with build statistics
 - **Command-Line Interface**: Non-interactive builds for CI/CD integration
-- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Cross-Platform**: Works on Windows, macOS, and Linux (iOS requires macOS)
+- **Unity Version Validation**: Detects version mismatches between project and executable
+- **Smart Path Detection**: Shows both project Unity version and actual executable being used
 
 ## Requirements
 
@@ -67,6 +69,11 @@ UNITY_PATH="C:/Program Files/Unity/Hub/Editor/2021.3.16f1/Editor/Unity.exe"
 # Linux example:
 # UNITY_PATH="/home/username/Unity/Hub/Editor/2021.3.16f1/Editor/Unity"
 ```
+
+**Important: Unity Version Considerations**
+- The script will detect if your Unity executable version differs from the project version
+- Using a different Unity version may cause compatibility issues
+- You'll be warned if versions don't match, but can choose to continue
 
 ### 4. Add Unity Build Script
 
@@ -187,14 +194,30 @@ The system automatically detects:
 
 No manual configuration needed!
 
-| Setting         | Source                | Example                              |
-|-----------------|-----------------------|--------------------------------------|
-| Project Name    | ProjectSettings.asset | "My Awesome Game"                    |
-| Company Name    | ProjectSettings.asset | "Indie Studio"                       |
-| Project Version | ProjectSettings.asset | "1.0.0"                              |
-| Unity Version   | ProjectVersion.txt    | "2021.3.16f1"                        |
-| Bundle ID       | ProjectSettings.asset | "com.IndieStudio.MyAwesomeGame"      |
-| Project Root    | Script location       | Finds Assets/ProjectSettings folders |
+| Setting | Source | Example |
+|---------|---------|---------|
+| Project Name | ProjectSettings.asset | "My Awesome Game" |
+| Company Name | ProjectSettings.asset | "Indie Studio" |
+| Project Version | ProjectSettings.asset | "1.0.0" |
+| Unity Version | ProjectVersion.txt | "2021.3.16f1" |
+| Bundle ID | ProjectSettings.asset | "com.IndieStudio.MyAwesomeGame" |
+| Project Root | Script location | Finds Assets/ProjectSettings folders |
+
+### Understanding Unity Versions
+
+**Project Unity Version**: The Unity version your project was created/last saved with (from `ProjectVersion.txt`)
+
+**Unity Executable Version**: The Unity installation you're using to build (from `.env` file)
+
+These can be different! The script will:
+1. Show both versions in the configuration display
+2. Warn you if they don't match
+3. Let you decide whether to continue
+
+**When is a version mismatch OK?**
+- Minor version differences (e.g., 2021.3.16f1 → 2021.3.18f1) are usually safe
+- Using a newer Unity version to build an older project often works
+- Major version differences may cause issues
 
 ## HTML Build Reports
 
@@ -233,7 +256,15 @@ Exit codes:
 - Only available when running on macOS
 - Requires Xcode command line tools
 
+### iOS Builds
+- Only available when running on macOS
+- Requires iOS Build Support module
+- Outputs Xcode project (not final .ipa)
+- Must set bundle identifier in Player Settings
+- Open in Xcode to build the final app
+
 ### WebGL Builds
+- Requires WebGL Build Support module
 - Requires significant memory (8GB+ recommended)
 - Build times are longer than other platforms
 - Creates a folder instead of a single file
@@ -279,8 +310,8 @@ Contributions welcome! Please:
 ## Support
 
 - [GitHub Issues](https://github.com/angrysharkstudio/Unity-Python-Build-Automation/issues)
-- [Blog Tutorial](https://www.angry-shark-studio.com/blog/python-unity-build-automation-tutorial)
+- [Blog Tutorial](https://angrysharkstudio.com/blog/python-unity-build-automation-tutorial)
 
 ---
 
-Made with Python and Unity by [Angry Shark Studio](https://www.angry-shark-studio.com/)
+Made with Python and Unity by [Angry Shark Studio](https://angrysharkstudio.com)
