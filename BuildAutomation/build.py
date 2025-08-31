@@ -33,6 +33,8 @@ def main():
             success = builder.build_windows()
             if success:
                 console.print("\n[green]Windows build completed successfully![/]")
+                # Generate report for single platform build
+                builder.generate_report()
         
         elif choice == "all":
             # Build all platforms
