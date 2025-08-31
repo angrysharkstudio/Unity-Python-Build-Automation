@@ -5,19 +5,19 @@
 **Important**: Unity and Python handle the build output paths in a coordinated way:
 
 1. **Unity builds to**: `Builds/Platform/Version/` (e.g., `Builds/Windows/1.0.0/MyGame.exe`)
-2. **Python expects**: Unity output at the version folder
+2. **Python expects**: Unity output in the version folder
 3. **Python moves to**: Timestamped folder (e.g., `Builds/Windows/1.0.0_31-08-2025_14-30/MyGame.exe`)
 
 This approach ensures:
 - Unity uses simple, predictable paths
-- Python adds timestamps to prevent overwrites
+- Python adds timestamps to prevent overwriting
 - No synchronization issues between Unity and Python timestamps
 
 ## Common Build Failures
 
 ### 1. Build Output Not Found
 
-**Symptom**: Python script reports "build failed" even though Unity might have succeeded.
+**Symptom**: A Python script reports "build failed" even though Unity might have succeeded.
 
 **Solution**: We've updated `CommandLineBuild.cs` to include timestamps in the output paths to match what the Python script expects. Make sure to:
 1. Copy the updated `CommandLineBuild.cs` to your Unity project's `Assets/Scripts/Editor/` folder
@@ -25,7 +25,7 @@ This approach ensures:
 
 ### 2. No Scenes in Build Settings
 
-**Symptom**: Build fails with "No scenes in Build Settings" error.
+**Symptom**: Build fails with the "No scenes in Build Settings" error.
 
 **Solution**:
 1. Open Unity
@@ -44,7 +44,7 @@ This approach ensures:
 - Example macOS: `/Users/YourName/Library/Android/sdk`
 - Example Linux: `/home/YourName/Android/Sdk`
 
-#### Unity Android Build Support Not Installed
+#### Unity Android Build Support Isn't Installed
 - Open Unity Hub
 - Go to Installs
 - Click the gear icon on your Unity version
@@ -111,11 +111,11 @@ Check these logs for detailed error messages.
 
 **Product Name Not Set**:
 - File → Build Settings → Player Settings
-- Set "Product Name" field
+- Set the "Product Name" field
 
 **Company Name Not Set**:
 - File → Build Settings → Player Settings
-- Set "Company Name" field
+- Set the "Company Name" field
 
 ### 9. Python Environment Issues
 
@@ -136,13 +136,13 @@ This is the most common WebGL build error. Solutions:
 
 1. **Install WebGL Build Support**:
    - Open Unity Hub
-   - Click gear icon on your Unity version
+   - Click the gear icon on your Unity version
    - Add modules → WebGL Build Support
    - Verify installation at: `Unity/Editor/Data/PlaybackEngines/WebGLSupport`
 
 2. **Command Line Fix**:
    - The script now includes `-buildTarget WebGL` parameter automatically
-   - This tells Unity to load WebGL module before building
+   - This tells Unity to load the WebGL module before building
 
 3. **Antivirus Issues**:
    - Check if antivirus quarantined `MonoBleedingEdge`
@@ -150,7 +150,7 @@ This is the most common WebGL build error. Solutions:
 
 4. **Memory Requirements**:
    - WebGL builds need 8GB+ RAM
-   - Close other applications during build
+   - Close other applications during the build
    - Consider increasing virtual memory
 
 ### 11. iOS Build Information
@@ -164,7 +164,7 @@ This is the most common WebGL build error. Solutions:
 
 2. **Build Output**:
    - Creates Xcode project, not final .ipa file
-   - Must open in Xcode to create final app
+   - Must open in Xcode to create the final app
    - Located in: `Builds/iOS/Version_Timestamp/`
 
 3. **Bundle Identifier**:
@@ -175,7 +175,7 @@ This is the most common WebGL build error. Solutions:
 4. **Common Errors**:
    - "iOS builds can only be created on macOS" - Running on Windows/Linux
    - "iOS module not installed" - Add iOS Build Support in Unity Hub
-   - "Bundle Identifier not set" - Configure in Player Settings
+   - "Bundle Identifier isn't set" - Configure in Player Settings
 
 ### 12. Quick Verification Steps
 
