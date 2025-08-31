@@ -130,7 +130,7 @@ public class CommandLineBuild {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
 
-        // Get an output path from command line arguments
+        // Get output path from command line arguments
         var outputPath = GetOutputPath("Android", productName, bundleVersion, ".apk");
 
         // Note: Android signing should be configured in Player Settings
@@ -155,6 +155,12 @@ public class CommandLineBuild {
     }
 
     public static void BuildWebGL() {
+        // Check if WebGL module is installed
+        if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.WebGL, BuildTarget.WebGL)) {
+            Debug.LogError("WebGL module not installed! Please install WebGL Build Support in Unity Hub.");
+            EditorApplication.Exit(1);
+        }
+
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
 
@@ -176,6 +182,57 @@ public class CommandLineBuild {
         if (report.summary.result != BuildResult.Succeeded) {
             Debug.LogError($"WebGL build failed: {report.summary.result}");
             EditorApplication.Exit(1);
+        }
+    }
+
+    public static void BuildiOS() {
+        // Check if running on macOS
+        if (Application.platform != RuntimePlatform.OSXEditor) {
+            Debug.LogError("iOS builds can only be created on macOS!");
+            EditorApplication.Exit(1);
+        }
+
+        // Check if an iOS module is installed
+        if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.iOS, BuildTarget.iOS)) {
+            Debug.LogError("iOS module not installed! Please install iOS Build Support in Unity Hub.");
+            EditorApplication.Exit(1);
+        }
+
+        // Ensure bundle identifier is set
+        var bundleId = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.iOS);
+
+        if (string.IsNullOrEmpty(bundleId) || bundleId == "com.Company.ProductName") {
+            Debug.LogError("iOS Bundle Identifier not set properly in Player Settings!");
+            Debug.LogError("Please set a valid bundle identifier (e.g., com.yourcompany.yourproduct)");
+            EditorApplication.Exit(1);
+        }
+
+        var productName = GetProductName();
+        var bundleVersion = GetBundleVersion();
+
+        // Get output path from command line arguments
+        var outputPath = GetOutputPath("iOS", productName, bundleVersion, "");
+
+        var buildPlayerOptions = new BuildPlayerOptions {
+            scenes = GetScenePaths(),
+            locationPathName = outputPath,
+            target = BuildTarget.iOS,
+            options = BuildOptions.None
+        };
+
+        Debug.Log($"Building iOS Xcode Project: {productName} v{bundleVersion}");
+        Debug.Log($"Bundle Identifier: {bundleId}");
+        Debug.Log($"Note: This will create an Xcode project, not a final iOS app");
+        EnsureDirectoryExists(outputPath);
+
+        var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        if (report.summary.result != BuildResult.Succeeded) {
+            Debug.LogError($"iOS build failed: {report.summary.result}");
+            EditorApplication.Exit(1);
+        } else {
+            Debug.Log("iOS Xcode project created successfully!");
+            Debug.Log("Open the project in Xcode to build and deploy to iOS devices");
         }
     }
 

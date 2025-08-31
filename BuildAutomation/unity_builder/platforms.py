@@ -41,7 +41,21 @@ class PlatformBuilder:
             'method': 'CommandLineBuild.BuildWebGL',
             'extension': '',  # WebGL creates a folder
             'name': 'WebGL'
+        },
+        'ios': {
+            'method': 'CommandLineBuild.BuildiOS',
+            'extension': '',  # iOS creates an Xcode project folder
+            'name': 'iOS'
         }
+    }
+    
+    # Unity command line build target names
+    BUILD_TARGET_MAPPING = {
+        'windows': 'Win64',
+        'mac': 'OSXUniversal',
+        'android': 'Android',
+        'webgl': 'WebGL',
+        'ios': 'iOS'
     }
     
     def __init__(self, config):
@@ -69,6 +83,11 @@ class PlatformBuilder:
             # Mac builds only work on macOS
             if sys.platform != 'darwin':
                 return False, "Mac builds only available on macOS"
+        
+        elif platform == 'ios':
+            # iOS builds only work on macOS
+            if sys.platform != 'darwin':
+                return False, "iOS builds only available on macOS (outputs Xcode project)"
         
         elif platform == 'webgl':
             # WebGL builds require more memory
@@ -114,6 +133,7 @@ class PlatformBuilder:
             '-quit',
             '-nographics',
             '-projectPath', str(self.config.project_root),
+            '-buildTarget', self.BUILD_TARGET_MAPPING.get(platform_name, platform_name),
             '-executeMethod', platform_info['method'],
             '-logFile', str(self.config.project_root / 'BuildAutomation' / f'build_{platform_name}.log')
         ]

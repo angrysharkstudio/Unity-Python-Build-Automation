@@ -54,7 +54,8 @@ def prompt_custom_platforms() -> list:
         "1": "windows",
         "2": "mac",
         "3": "android",
-        "4": "webgl"
+        "4": "webgl",
+        "5": "ios"
     }
     
     console.print("\n[bold]Select platforms to build:[/bold]")
@@ -62,6 +63,7 @@ def prompt_custom_platforms() -> list:
     console.print("  [cyan]2.[/cyan] macOS")
     console.print("  [cyan]3.[/cyan] Android") 
     console.print("  [cyan]4.[/cyan] WebGL")
+    console.print("  [cyan]5.[/cyan] iOS (Xcode project - macOS only)")
     
     selections = Prompt.ask(
         "\nEnter platform numbers separated by commas",
