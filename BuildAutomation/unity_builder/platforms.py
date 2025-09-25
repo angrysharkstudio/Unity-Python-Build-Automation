@@ -9,6 +9,7 @@ import os
 import sys
 import subprocess
 import time
+import json
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from rich.console import Console
@@ -81,6 +82,19 @@ class PlatformBuilder:
         else:
             # For WebGL and other folder-based builds
             return platform_dir / self.config.project_name
+    
+    def _read_build_summary(self, platform: str) -> Optional[Dict[str, Any]]:
+        """Read build summary JSON if available."""
+        platform_folder = self.PLATFORM_DIR_NAMES.get(platform, platform.capitalize())
+        summary_path = self.config.project_root / "Builds" / platform_folder / self.config.project_version / "build_summary.json"
+        
+        if summary_path.exists():
+            try:
+                with open(summary_path, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                console.print(f"[yellow]Warning: Could not read build_summary.json: {e}[/]")
+        return None
     
     def check_platform_available(self, platform: str) -> Tuple[bool, Optional[str]]:
         """Check if platform build support is available."""
@@ -179,8 +193,24 @@ class PlatformBuilder:
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 build_time = time.time() - start_time
                 
-                # Check if build succeeded
-                if result.returncode == 0 and unity_output_path.exists():
+                # Check if build succeeded - first try build_summary.json, then fall back to old method
+                build_summary = self._read_build_summary(platform_name)
+                build_succeeded = False
+                build_errors = []
+                
+                if build_summary:
+                    # Use build summary if available
+                    build_succeeded = build_summary.get('status') == 'success'
+                    build_errors = build_summary.get('errors', [])
+                    
+                    # Update build info if available
+                    if build_succeeded and 'build_size_mb' in build_summary:
+                        reported_size_mb = build_summary['build_size_mb']
+                else:
+                    # Fall back to old method
+                    build_succeeded = result.returncode == 0 and unity_output_path.exists()
+                
+                if build_succeeded:
                     # Move build to timestamped folder
                     import shutil
                     if unity_output_path != final_output_path:
@@ -213,22 +243,42 @@ class PlatformBuilder:
                     console.print(f"   [dim]Size: {size_mb:.1f} MB[/]")
                     console.print(f"   [dim]Version: {self.config.project_version}[/]")
                     
-                    self.build_results.append({
+                    # Use reported size from build summary if available
+                    if build_summary and 'build_size_mb' in build_summary:
+                        size_mb = build_summary['build_size_mb']
+                    
+                    build_result = {
                         'platform': platform_name,
                         'status': 'success',
                         'time': build_time,
                         'size_mb': size_mb,
                         'output_path': final_output_path
-                    })
+                    }
+                    
+                    # Add extra info from build summary if available
+                    if build_summary:
+                        build_result['unity_version'] = build_summary.get('unity_version')
+                        build_result['scene_count'] = build_summary.get('scene_count')
+                        build_result['warnings_count'] = build_summary.get('warnings_count', 0)
+                    
+                    self.build_results.append(build_result)
                     return True
                 else:
                     progress.stop()
                     console.print(f"[red]{platform_info['name']} build failed![/]")
                     
+                    # Show errors from build summary if available
+                    if build_errors:
+                        console.print(f"[red]Build errors:[/]")
+                        for error in build_errors[:5]:  # Show first 5 errors
+                            console.print(f"  [red]• {error}[/]")
+                        if len(build_errors) > 5:
+                            console.print(f"  [dim]... and {len(build_errors) - 5} more errors[/]")
+                    
                     if result.returncode != 0:
                         console.print(f"[red]Unity exited with error code: {result.returncode}[/]")
                     
-                    if not unity_output_path.exists():
+                    if not build_succeeded and not build_summary and not unity_output_path.exists():
                         console.print(f"[red]Expected output not found at: {unity_output_path}[/]")
                         console.print(f"[yellow]Unity may have built to a different location.[/]")
                         

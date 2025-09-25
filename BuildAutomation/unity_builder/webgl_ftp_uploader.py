@@ -168,7 +168,8 @@ class WebGLFTPUploader:
                     local_file = Path(root) / file
                     relative_path = local_file.relative_to(build_path)
                     # Build full remote path including the base path
-                    remote_file = f"{self.ftp_remote_path.rstrip('/')}/{str(relative_path).replace('\\', '/')}"
+                    path_str = str(relative_path).replace('\\', '/')
+                    remote_file = f"{self.ftp_remote_path.rstrip('/')}/{path_str}"
                     files_to_upload.append((local_file, remote_file))
             
             console.print(f"\n[cyan]Uploading {len(files_to_upload)} files to FTP server...[/]")

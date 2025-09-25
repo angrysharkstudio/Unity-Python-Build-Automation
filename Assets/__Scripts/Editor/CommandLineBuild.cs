@@ -12,6 +12,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -20,6 +21,67 @@ using UnityEngine;
 // ReSharper disable UnusedType.Global
 
 public class CommandLineBuild {
+
+    // Build summary data structure for JSON output
+    [System.Serializable]
+    private class BuildSummary {
+        public string status;
+        public string platform;
+        public string product_name;
+        public string version;
+        public string timestamp;
+        public float build_duration_seconds;
+        public string output_path;
+        public string unity_version;
+        public int warnings_count;
+        public List<string> errors;
+        public float build_size_mb;
+        public int scene_count;
+    }
+
+    // Write build summary JSON file
+    private static void WriteBuildSummary(BuildReport report, string platform, string outputPath, DateTime buildStartTime) {
+        var summary = new BuildSummary {
+            status = report.summary.result == BuildResult.Succeeded ? "success" : "failed",
+            platform = platform,
+            product_name = GetProductName(),
+            version = GetBundleVersion(),
+            timestamp = DateTime.Now.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+            build_duration_seconds = (float)(DateTime.Now - buildStartTime).TotalSeconds,
+            output_path = outputPath,
+            unity_version = Application.unityVersion,
+            warnings_count = 0, // Unity doesn't expose warning count in BuildReport
+            errors = new List<string>(),
+            build_size_mb = report.summary.totalSize / (1024f * 1024f),
+            scene_count = GetScenePaths().Length
+        };
+
+        // Add error messages if build failed
+        if (report.summary.result != BuildResult.Succeeded) {
+            summary.errors.Add(report.summary.result.ToString());
+            
+            // Add any build step messages that indicate errors
+            foreach (var step in report.steps) {
+                foreach (var message in step.messages) {
+                    if (message.type == LogType.Error || message.type == LogType.Exception) {
+                        summary.errors.Add(message.content);
+                    }
+                }
+            }
+        }
+
+        // Write to JSON file in the output directory
+        var outputDir = Path.GetDirectoryName(outputPath);
+        var summaryPath = Path.Combine(outputDir, "build_summary.json");
+        
+        try {
+            var json = JsonUtility.ToJson(summary, true);
+            File.WriteAllText(summaryPath, json);
+            Debug.Log($"Build summary written to: {summaryPath}");
+        } catch (Exception e) {
+            Debug.LogError($"Failed to write build summary: {e.Message}");
+        }
+    }
 
     // Get scenes from Build Settings (no hardcoding!)
     private static string[] GetScenePaths() {
@@ -161,7 +223,11 @@ public class CommandLineBuild {
 
         EnsureDirectoryExists(outputPath);
 
+        var buildStartTime = DateTime.Now;
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Write build summary
+        WriteBuildSummary(report, "windows", outputPath, buildStartTime);
 
         if (report.summary.result == BuildResult.Succeeded) {
             Debug.Log("Windows build succeeded!");
@@ -189,7 +255,11 @@ public class CommandLineBuild {
         Debug.Log($"Building Mac: {productName} v{bundleVersion}");
         EnsureDirectoryExists(outputPath);
 
+        var buildStartTime = DateTime.Now;
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Write build summary
+        WriteBuildSummary(report, "mac", outputPath, buildStartTime);
 
         if (report.summary.result != BuildResult.Succeeded) {
             Debug.LogError($"Mac build failed: {report.summary.result}");
@@ -217,7 +287,11 @@ public class CommandLineBuild {
         Debug.Log($"Building Android: {productName} v{bundleVersion}");
         EnsureDirectoryExists(outputPath);
 
+        var buildStartTime = DateTime.Now;
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Write build summary
+        WriteBuildSummary(report, "android", outputPath, buildStartTime);
 
         if (report.summary.result != BuildResult.Succeeded) {
             Debug.LogError($"Android build failed: {report.summary.result}");
@@ -248,7 +322,11 @@ public class CommandLineBuild {
         Debug.Log($"Building WebGL: {productName} v{bundleVersion}");
         EnsureDirectoryExists(outputPath);
 
+        var buildStartTime = DateTime.Now;
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Write build summary
+        WriteBuildSummary(report, "webgl", outputPath, buildStartTime);
 
         if (report.summary.result != BuildResult.Succeeded) {
             Debug.LogError($"WebGL build failed: {report.summary.result}");
@@ -296,7 +374,11 @@ public class CommandLineBuild {
         Debug.Log($"Note: This will create an Xcode project, not a final iOS app");
         EnsureDirectoryExists(outputPath);
 
+        var buildStartTime = DateTime.Now;
         var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Write build summary
+        WriteBuildSummary(report, "ios", outputPath, buildStartTime);
 
         if (report.summary.result != BuildResult.Succeeded) {
             Debug.LogError($"iOS build failed: {report.summary.result}");
