@@ -103,7 +103,7 @@ class WebGLFTPUploader:
         current_path = ''
         
         for part in parts:
-            current_path += '/' + part
+            current_path += f'/{part}'
             try:
                 self.ftp.cwd(current_path)
             except ftplib.error_perm:
@@ -168,7 +168,7 @@ class WebGLFTPUploader:
                     local_file = Path(root) / file
                     relative_path = local_file.relative_to(build_path)
                     # Build full remote path including the base path
-                    remote_file = self.ftp_remote_path.rstrip('/') + '/' + str(relative_path).replace('\\', '/')
+                    remote_file = f"{self.ftp_remote_path.rstrip('/')}/{str(relative_path).replace('\\', '/')}"
                     files_to_upload.append((local_file, remote_file))
             
             console.print(f"\n[cyan]Uploading {len(files_to_upload)} files to FTP server...[/]")
