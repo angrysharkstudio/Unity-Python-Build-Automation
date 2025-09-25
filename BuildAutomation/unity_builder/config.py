@@ -10,6 +10,7 @@ import sys
 import re
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
@@ -21,18 +22,21 @@ console = Console()
 class Config:
     """Handles all configuration and auto-detection for Unity builds."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize configuration with auto-detected settings."""
         load_dotenv()
         
         # Auto-detect everything
-        self.project_root = self._find_project_root()
-        self.project_name = self._get_project_name()
-        self.company_name = self._get_company_name()
-        self.unity_version = self._get_unity_version()
-        self.project_version = self._get_project_version()
-        self.bundle_identifier = self._get_bundle_identifier()
-        self.unity_path = os.getenv('UNITY_PATH')
+        self.project_root: Path = self._find_project_root()
+        self.project_name: str = self._get_project_name()
+        self.company_name: str = self._get_company_name()
+        self.unity_version: str = self._get_unity_version()
+        self.project_version: str = self._get_project_version()
+        self.bundle_identifier: str = self._get_bundle_identifier()
+        self.unity_path: Optional[str] = os.getenv('UNITY_PATH')
+        
+        # Pre-build hook configuration
+        self.pre_build_hook: str = os.getenv('PRE_BUILD_HOOK', '')
         
         # Validate Unity path
         if not self.unity_path:
@@ -45,10 +49,10 @@ class Config:
             sys.exit(1)
         
         # Extract Unity version from executable path and validate
-        self.unity_exe_version = self._extract_unity_version_from_path(self.unity_path)
+        self.unity_exe_version: str = self._extract_unity_version_from_path(self.unity_path)
         self._validate_unity_versions()
     
-    def print_configuration(self):
+    def print_configuration(self) -> None:
         """Display the detected configuration in a nice table."""
         table = Table(title="Unity Build Configuration", show_header=False)
         table.add_column("Setting", style="cyan", no_wrap=True)
@@ -67,6 +71,10 @@ class Config:
         
         table.add_row("Unity Executable", unity_exe_display)
         table.add_row("Bundle ID", self.bundle_identifier)
+        
+        # Show pre-build hook if configured
+        if self.pre_build_hook:
+            table.add_row("Pre-build Hook", self.pre_build_hook)
         
         console.print(table)
     
@@ -181,7 +189,7 @@ class Config:
         product = self.project_name.replace(" ", "").replace(".", "")
         return f"com.{company}.{product}"
     
-    def _print_unity_path_error(self):
+    def _print_unity_path_error(self) -> None:
         """Print helpful error message for missing Unity path."""
         console.print("[red]Unity path not found![/]")
         console.print("\n[yellow]Please set UNITY_PATH in .env file[/]")
@@ -204,7 +212,7 @@ class Config:
             return match.group(1)
         return "Unknown"
     
-    def _validate_unity_versions(self):
+    def _validate_unity_versions(self) -> None:
         """Validate that Unity executable version matches project version."""
         if self.unity_exe_version != "Unknown" and self.unity_exe_version != self.unity_version:
             console.print(f"\n[yellow]⚠️  Unity Version Mismatch Detected![/]")
@@ -221,13 +229,18 @@ class Config:
     
     def get_build_output_path(self, platform: str, extension: str = "") -> Path:
         """Get the output path for a specific platform build with version and timestamp."""
+        # Import platform directory names to avoid duplication
+        from .platforms import PlatformBuilder
+        
         # Generate timestamp in format: dd-MM-yyyy_HH-mm
         timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M")
         
         # Create folder name with version and timestamp
         folder_name = f"{self.project_version}_{timestamp}"
         
-        platform_dir = self.project_root / "Builds" / platform.capitalize() / folder_name
+        # Use the platform directory names from PlatformBuilder
+        platform_folder = PlatformBuilder.PLATFORM_DIR_NAMES.get(platform, platform.lower())
+        platform_dir = self.project_root / "Builds" / platform_folder / folder_name
         platform_dir.mkdir(parents=True, exist_ok=True)
         
         if extension:

@@ -19,7 +19,7 @@ from unity_builder.utils import (
 console = Console()
 
 
-def main():
+def main() -> None:
     """Run Unity build automation with interactive menu."""
     try:
         # Initialize the builder
@@ -50,6 +50,19 @@ def main():
             results = builder.build_custom_platforms(platforms)
             builder.generate_report(results)
             console.print("\n[green]Custom build completed![/]")
+        
+        elif choice == "webgl_upload":
+            # Build WebGL and upload
+            console.print("\n[cyan]WebGL Build with FTP Upload[/]")
+            success, message = builder.build_webgl_with_upload()
+            console.print(f"\n{message}")
+            
+            if success:
+                # Generate report
+                builder.generate_report()
+                console.print("\n[green]WebGL build and upload completed![/]")
+            else:
+                console.print("\n[red]WebGL build or upload failed![/]")
         
         elif choice == "exit":
             console.print("\n[yellow]Goodbye![/]")

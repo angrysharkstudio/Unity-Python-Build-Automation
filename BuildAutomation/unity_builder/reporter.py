@@ -8,7 +8,7 @@ MIT License - Copyright (c) 2025 Angry Shark Studio
 import webbrowser
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Any
 from rich.console import Console
 
 console = Console()
@@ -17,11 +17,11 @@ console = Console()
 class Reporter:
     """Generates HTML build reports."""
     
-    def __init__(self, config):
+    def __init__(self, config: Any) -> None:
         """Initialize with configuration object."""
         self.config = config
     
-    def generate_report(self, build_results: List[Dict]) -> Path:
+    def generate_report(self, build_results: List[Dict[str, Any]]) -> Path:
         """Generate HTML build report and return the path."""
         report_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
@@ -46,7 +46,7 @@ class Reporter:
         
         return report_path
     
-    def _generate_html(self, build_results: List[Dict], report_time: str) -> str:
+    def _generate_html(self, build_results: List[Dict[str, Any]], report_time: str) -> str:
         """Generate the HTML content for the report."""
         # Count statistics
         total_builds = len(build_results)
@@ -288,7 +288,7 @@ class Reporter:
 </html>
 """
     
-    def _generate_build_rows(self, build_results: List[Dict]) -> str:
+    def _generate_build_rows(self, build_results: List[Dict[str, Any]]) -> str:
         """Generate table rows for build results."""
         from .platforms import PlatformBuilder
         

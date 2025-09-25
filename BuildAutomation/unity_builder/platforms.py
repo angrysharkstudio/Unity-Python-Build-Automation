@@ -10,7 +10,7 @@ import sys
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
 from rich.table import Table
@@ -21,7 +21,7 @@ console = Console()
 class PlatformBuilder:
     """Handles platform-specific build operations."""
     
-    PLATFORMS = {
+    PLATFORMS: Dict[str, Dict[str, str]] = {
         'windows': {
             'method': 'CommandLineBuild.BuildWindows',
             'extension': '.exe',
@@ -50,7 +50,7 @@ class PlatformBuilder:
     }
     
     # Unity command line build target names
-    BUILD_TARGET_MAPPING = {
+    BUILD_TARGET_MAPPING: Dict[str, str] = {
         'windows': 'Win64',
         'mac': 'OSXUniversal',
         'android': 'Android',
@@ -58,14 +58,24 @@ class PlatformBuilder:
         'ios': 'iOS'
     }
     
-    def __init__(self, config):
+    # Platform directory names (using lowercase for consistency)
+    PLATFORM_DIR_NAMES: Dict[str, str] = {
+        'windows': 'windows',
+        'mac': 'mac',
+        'android': 'android',
+        'webgl': 'webgl',
+        'ios': 'ios'
+    }
+    
+    def __init__(self, config: Any) -> None:
         """Initialize with configuration object."""
         self.config = config
-        self.build_results = []
+        self.build_results: List[Dict[str, Any]] = []
     
     def _get_unity_output_path(self, platform: str, extension: str = "") -> Path:
         """Get the path where Unity will output the build (without timestamp)."""
-        platform_dir = self.config.project_root / "Builds" / platform.capitalize() / self.config.project_version
+        platform_folder = self.PLATFORM_DIR_NAMES.get(platform, platform.capitalize())
+        platform_dir = self.config.project_root / "Builds" / platform_folder / self.config.project_version
         if extension:
             return platform_dir / f"{self.config.project_name}{extension}"
         else:
@@ -95,7 +105,7 @@ class PlatformBuilder:
         
         return True, None
     
-    def build_platform(self, platform_name: str) -> bool:
+    def build_platform(self, platform_name: str, pre_build_hook: Optional[str] = None, skip_hook: bool = False) -> bool:
         """Build for a specific platform with progress indication."""
         platform_info = self.PLATFORMS.get(platform_name)
         if not platform_info:
@@ -123,6 +133,20 @@ class PlatformBuilder:
         
         console.print(f"\n[cyan]Building for {platform_info['name']}...[/]")
         console.print(f"[dim]Output: {final_output_path.relative_to(self.config.project_root)}[/]")
+        
+        # Execute pre-build hook if configured
+        hook_to_use = pre_build_hook if pre_build_hook else self.config.pre_build_hook
+        if hook_to_use and not skip_hook:
+            console.print(f"[cyan]Executing pre-build hook:[/] {hook_to_use}")
+            hook_success = self._execute_pre_build_hook(hook_to_use)
+            if not hook_success:
+                console.print("[red]Pre-build hook failed! Aborting build.[/]")
+                self.build_results.append({
+                    'platform': platform_name,
+                    'status': 'failed',
+                    'reason': 'Pre-build hook failed'
+                })
+                return False
         
         start_time = time.time()
         
@@ -156,9 +180,6 @@ class PlatformBuilder:
                 build_time = time.time() - start_time
                 
                 # Check if build succeeded
-                console.print(f"[dim]Unity exit code: {result.returncode}[/]")
-                console.print(f"[dim]Checking for output at: {unity_output_path}[/]")
-                
                 if result.returncode == 0 and unity_output_path.exists():
                     # Move build to timestamped folder
                     import shutil
@@ -171,6 +192,12 @@ class PlatformBuilder:
                         
                         # Move the build to the timestamped folder
                         shutil.move(str(unity_output_path), str(final_output_path))
+                        
+                        # Clean up empty version folder if it exists
+                        version_folder = unity_output_path.parent
+                        if version_folder.exists() and not any(version_folder.iterdir()):
+                            version_folder.rmdir()
+                            console.print(f"[dim]Cleaned up empty folder: {version_folder}[/]")
                     
                     # Calculate size
                     if final_output_path.is_file():
@@ -237,7 +264,7 @@ class PlatformBuilder:
                 })
                 return False
     
-    def build_all_platforms(self) -> List[Dict]:
+    def build_all_platforms(self) -> List[Dict[str, Any]]:
         """Build for all available platforms."""
         console.print(f"\n[bold cyan]Starting multi-platform build[/]")
         console.print(f"[dim]Project: {self.config.project_name} v{self.config.project_version}[/]")
@@ -257,7 +284,7 @@ class PlatformBuilder:
         
         return self.build_results
     
-    def build_selected_platforms(self, platforms: List[str]) -> List[Dict]:
+    def build_selected_platforms(self, platforms: List[str], pre_build_hook: Optional[str] = None, skip_hook: bool = False) -> List[Dict[str, Any]]:
         """Build only selected platforms."""
         console.print(f"\n[bold cyan]Building selected platforms[/]")
         console.print(f"[dim]Project: {self.config.project_name} v{self.config.project_version}[/]")
@@ -267,7 +294,7 @@ class PlatformBuilder:
         
         for platform_name in platforms:
             if platform_name in self.PLATFORMS:
-                if self.build_platform(platform_name):
+                if self.build_platform(platform_name, pre_build_hook, skip_hook):
                     success_count += 1
             else:
                 console.print(f"[yellow]Unknown platform: {platform_name}[/]")
@@ -277,7 +304,7 @@ class PlatformBuilder:
         
         return self.build_results
     
-    def _show_build_errors(self, platform: str):
+    def _show_build_errors(self, platform: str) -> None:
         """Try to show relevant errors from build log."""
         log_path = self.config.project_root / 'BuildAutomation' / f'build_{platform}.log'
         
@@ -298,7 +325,7 @@ class PlatformBuilder:
             except:
                 pass
     
-    def _show_build_summary(self, success_count: int, total_time: float):
+    def _show_build_summary(self, success_count: int, total_time: float) -> None:
         """Display build summary table."""
         table = Table(title="Build Summary")
         table.add_column("Platform", style="cyan")
@@ -335,3 +362,92 @@ class PlatformBuilder:
         console.print(f"[bold]Successful:[/] [green]{success_count}[/]")
         console.print(f"[bold]Total time:[/] {total_time:.1f} seconds ({total_time/60:.1f} minutes)")
         console.print(f"[bold]Output version:[/] {self.config.project_version}")
+    
+    def _execute_pre_build_hook(self, hook_method: str) -> bool:
+        """Execute a pre-build hook in Unity."""
+        console.print(f"[dim]Running hook: {hook_method}[/]")
+        
+        # Command to execute the hook
+        cmd = [
+            str(self.config.unity_path),
+            '-batchmode',
+            '-quit',
+            '-nographics',
+            '-projectPath', str(self.config.project_root),
+            '-executeMethod', 'CommandLineBuild.ExecutePreBuildHook',
+            '-preBuildHook', hook_method,
+            '-logFile', str(self.config.project_root / 'BuildAutomation' / 'hook.log')
+        ]
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            
+            if result.returncode == 0:
+                console.print("[green]Pre-build hook executed successfully[/]")
+                return True
+            else:
+                console.print(f"[red]Pre-build hook failed with exit code: {result.returncode}[/]")
+                
+                # Try to show errors from hook log
+                log_path = self.config.project_root / 'BuildAutomation' / 'hook.log'
+                if log_path.exists():
+                    with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        error_lines = [line for line in content.splitlines() if 'error' in line.lower()][:5]
+                        if error_lines:
+                            console.print("[red]Hook errors:[/]")
+                            for line in error_lines:
+                                console.print(f"  {line.strip()}")
+                
+                return False
+                
+        except subprocess.TimeoutExpired:
+            console.print("[red]Pre-build hook timed out after 60 seconds[/]")
+            return False
+        except Exception as e:
+            console.print(f"[red]Error executing pre-build hook: {str(e)}[/]")
+            return False
+    
+    def get_latest_build_path(self, platform: str) -> Optional[Path]:
+        """Get the path to the most recent build for a platform."""
+        platform_folder = self.PLATFORM_DIR_NAMES.get(platform, platform.capitalize())
+        builds_dir = self.config.project_root / "Builds" / platform_folder
+        
+        if not builds_dir.exists():
+            return None
+        
+        # For WebGL, we need to find directories that actually contain valid builds
+        if platform == 'webgl':
+            valid_builds = []
+            
+            # Check each directory for a valid WebGL build
+            for dir_path in builds_dir.iterdir():
+                if not dir_path.is_dir():
+                    continue
+                    
+                # Check if this directory contains a WebGL build
+                # Look for index.html either directly or in subdirectories
+                if (dir_path / "index.html").exists():
+                    valid_builds.append((dir_path, dir_path))
+                else:
+                    # Check subdirectories
+                    for subdir in dir_path.iterdir():
+                        if subdir.is_dir() and (subdir / "index.html").exists():
+                            valid_builds.append((dir_path, subdir))
+                            break
+            
+            if not valid_builds:
+                console.print("[yellow]No valid WebGL builds found[/]")
+                return None
+            
+            # Get the most recent valid build
+            latest_build = max(valid_builds, key=lambda x: x[0].stat().st_mtime)
+            console.print(f"[green]Found latest WebGL build: {latest_build[1]}[/]")
+            return latest_build[1]
+        
+        # For other platforms, just get the newest directory
+        build_dirs = [d for d in builds_dir.iterdir() if d.is_dir()]
+        if not build_dirs:
+            return None
+            
+        return max(build_dirs, key=lambda p: p.stat().st_mtime)

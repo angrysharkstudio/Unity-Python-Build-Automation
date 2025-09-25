@@ -272,6 +272,104 @@ Exit codes:
 - Requires significant memory (8GB+ recommended)
 - Build times are longer than other platforms
 - Creates a folder instead of a single file
+- Can be automatically uploaded to FTP (see WebGL FTP Deployment section)
+
+## Pre-Build Hooks (Advanced)
+
+Execute custom Unity methods before building to automate environment switching, version updates, or other preparations.
+
+### Setup
+
+1. Create a static method in your Unity project:
+```csharp
+public class BuildHooks {
+    public static void SwitchToProduction() {
+        // Your custom logic here
+        Debug.Log("Switched to production environment");
+        // Example: Update server URLs, API keys, etc.
+    }
+    
+    public static void IncrementBuildNumber() {
+        var currentVersion = PlayerSettings.bundleVersion;
+        // Parse and increment version logic
+        PlayerSettings.bundleVersion = newVersion;
+    }
+}
+```
+
+2. Configure in `.env`:
+```
+PRE_BUILD_HOOK="BuildHooks.SwitchToProduction"
+```
+
+3. The hook runs automatically before each build.
+
+### Command Line Usage
+
+```bash
+# Use hook from .env
+python build_cli.py webgl
+
+# Override with custom hook
+python build_cli.py webgl --hook "BuildHooks.PrepareWebGL"
+
+# Skip hook even if configured
+python build_cli.py webgl --no-hook
+```
+
+## WebGL FTP Deployment
+
+Automatically upload WebGL builds to your web server after building.
+
+### Setup
+
+1. Configure FTP in `.env`:
+```
+WEBGL_FTP_ENABLED=true
+WEBGL_FTP_HOST="ftp.yourdomain.com"
+WEBGL_FTP_USERNAME="your-username"
+WEBGL_FTP_PASSWORD="your-password"
+WEBGL_FTP_REMOTE_PATH="/public_html/games/mygame"
+WEBGL_FTP_OVERWRITE=true
+```
+
+2. Build and upload:
+```bash
+python build_cli.py webgl --upload
+```
+
+### One-Command Deployment
+
+Full pipeline with hook → build → upload:
+
+**Windows:**
+```batch
+scripts\webgl-full-deploy.bat
+```
+
+**macOS/Linux:**
+```bash
+chmod +x scripts/*.sh  # First time only
+./scripts/webgl-full-deploy.sh
+```
+
+The script will:
+1. Execute your pre-build hook (if configured)
+2. Build WebGL
+3. Upload to FTP with progress tracking
+4. Overwrite existing files (perfect for updates)
+
+### Additional WebGL Scripts
+
+- `webgl-build-upload.bat/.sh` - Build and upload (skip hook)
+- `webgl-hook-build.bat/.sh` - Hook and build (no upload)
+- `webgl-upload-only.bat/.sh` - Upload existing build
+
+### Security Considerations
+
+- Use FTPS (FTP over TLS) when possible: `WEBGL_FTP_USE_TLS=true`
+- Never commit `.env` files with passwords
+- Consider using deployment keys or CI/CD secrets for production
 
 ## Troubleshooting
 

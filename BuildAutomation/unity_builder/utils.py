@@ -8,7 +8,7 @@ MIT License - Copyright (c) 2025 Angry Shark Studio
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict
 from rich.console import Console
 from rich.prompt import Prompt, Confirm
 from rich.panel import Panel
@@ -16,7 +16,7 @@ from rich.panel import Panel
 console = Console()
 
 
-def show_welcome_banner():
+def show_welcome_banner() -> None:
     """Display welcome banner with project info."""
     banner_text = """
     [bold cyan]Unity Build Automation[/bold cyan]
@@ -34,21 +34,23 @@ def prompt_build_selection() -> str:
         "1": "windows",
         "2": "all",
         "3": "custom",
-        "4": "exit"
+        "4": "webgl_upload",
+        "5": "exit"
     }
     
     console.print("\n[bold]What would you like to build?[/bold]")
     console.print("  [cyan]1.[/cyan] Windows only")
     console.print("  [cyan]2.[/cyan] All platforms")
     console.print("  [cyan]3.[/cyan] Custom selection")
-    console.print("  [cyan]4.[/cyan] Exit")
+    console.print("  [cyan]4.[/cyan] WebGL build and upload")
+    console.print("  [cyan]5.[/cyan] Exit")
     
     while True:
         choice = Prompt.ask("\nEnter your choice", choices=list(choices.keys()))
         return choices.get(choice, "exit")
 
 
-def prompt_custom_platforms() -> list:
+def prompt_custom_platforms() -> List[str]:
     """Let user select specific platforms to build."""
     available_platforms = {
         "1": "windows",
@@ -130,7 +132,7 @@ def validate_unity_executable(unity_path: str) -> bool:
     return True
 
 
-def find_unity_installations() -> list:
+def find_unity_installations() -> List[Dict[str, str]]:
     """Try to find Unity installations on the system."""
     installations = []
     
@@ -181,7 +183,7 @@ def find_unity_installations() -> list:
     return installations
 
 
-def show_unity_installation_help():
+def show_unity_installation_help() -> None:
     """Show help for finding Unity installation."""
     console.print("\n[yellow]Unity Installation Help[/yellow]")
     

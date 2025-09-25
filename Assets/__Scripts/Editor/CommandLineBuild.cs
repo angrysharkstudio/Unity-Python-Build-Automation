@@ -11,6 +11,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -70,12 +71,82 @@ public class CommandLineBuild {
         return outputPath;
     }
 
+    // Get command line argument value
+    private static string GetCommandLineArg(string name) {
+        var args = Environment.GetCommandLineArgs();
+        for (var i = 0; i < args.Length; i++) {
+            if (args[i] == name && i + 1 < args.Length) {
+                return args[i + 1];
+            }
+        }
+        return null;
+    }
+
+    // Execute pre-build hook if specified
+    public static void ExecutePreBuildHook() {
+        var hookMethod = GetCommandLineArg("-preBuildHook");
+        if (string.IsNullOrEmpty(hookMethod)) {
+            Debug.Log("No pre-build hook specified");
+            return;
+        }
+
+        Debug.Log($"Executing pre-build hook: {hookMethod}");
+        
+        // Parse format: "ClassName.MethodName"
+        var parts = hookMethod.Split('.');
+        if (parts.Length != 2) {
+            Debug.LogError($"Invalid hook format: {hookMethod}. Expected format: ClassName.MethodName");
+            EditorApplication.Exit(1);
+            return;
+        }
+
+        var className = parts[0];
+        var methodName = parts[1];
+        
+        try {
+            // Find the type
+            Type type = null;
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                type = assembly.GetType(className);
+                if (type != null) break;
+            }
+            
+            if (type == null) {
+                Debug.LogError($"Class not found: {className}");
+                Debug.LogError("Make sure the class exists and is in a non-Editor assembly");
+                EditorApplication.Exit(1);
+                return;
+            }
+            
+            // Find the method
+            var method = type.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
+            if (method == null) {
+                Debug.LogError($"Method not found: {methodName} in class {className}");
+                Debug.LogError("Make sure the method is public and static");
+                EditorApplication.Exit(1);
+                return;
+            }
+            
+            // Invoke the method
+            Debug.Log($"Invoking {className}.{methodName}()...");
+            method.Invoke(null, null);
+            Debug.Log($"Pre-build hook completed: {className}.{methodName}");
+            
+        } catch (Exception e) {
+            Debug.LogError($"Error executing pre-build hook: {e.Message}");
+            if (e.InnerException != null) {
+                Debug.LogError($"Inner exception: {e.InnerException.Message}");
+            }
+            EditorApplication.Exit(1);
+        }
+    }
+
     public static void BuildWindows() {
         var productName = GetProductName();
         var bundleVersion = GetBundleVersion();
 
         // Get an output path from command line arguments
-        var outputPath = GetOutputPath("Windows", productName, bundleVersion, ".exe");
+        var outputPath = GetOutputPath("windows", productName, bundleVersion, ".exe");
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -106,7 +177,7 @@ public class CommandLineBuild {
         var bundleVersion = GetBundleVersion();
 
         // Get an output path from command line arguments
-        var outputPath = GetOutputPath("Mac", productName, bundleVersion, ".app");
+        var outputPath = GetOutputPath("mac", productName, bundleVersion, ".app");
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -131,7 +202,7 @@ public class CommandLineBuild {
         var bundleVersion = GetBundleVersion();
 
         // Get output path from command line arguments
-        var outputPath = GetOutputPath("Android", productName, bundleVersion, ".apk");
+        var outputPath = GetOutputPath("android", productName, bundleVersion, ".apk");
 
         // Note: Android signing should be configured in Player Settings
         // or passed via command line arguments for production builds
@@ -165,7 +236,7 @@ public class CommandLineBuild {
         var bundleVersion = GetBundleVersion();
 
         // Get an output path from command line arguments
-        var outputPath = GetOutputPath("WebGL", productName, bundleVersion, "");
+        var outputPath = GetOutputPath("webgl", productName, bundleVersion, "");
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -211,7 +282,7 @@ public class CommandLineBuild {
         var bundleVersion = GetBundleVersion();
 
         // Get output path from command line arguments
-        var outputPath = GetOutputPath("iOS", productName, bundleVersion, "");
+        var outputPath = GetOutputPath("ios", productName, bundleVersion, "");
 
         var buildPlayerOptions = new BuildPlayerOptions {
             scenes = GetScenePaths(),
@@ -254,3 +325,49 @@ public class CommandLineBuild {
     }
 
 }
+
+// Example pre-build hook class that users can copy and modify
+// This should be placed in a non-Editor script file in the project
+/*
+public class BuildHooks {
+    
+    // Example: Switch to production environment
+    public static void SwitchToProduction() {
+        Debug.Log("[BuildHooks] Switching to production environment...");
+        // Add your custom logic here, for example:
+        // - Change server URLs
+        // - Update API keys
+        // - Set production flags
+        // PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL, "PRODUCTION");
+    }
+    
+    // Example: Increment build number
+    public static void IncrementBuildNumber() {
+        var currentVersion = PlayerSettings.bundleVersion;
+        Debug.Log($"[BuildHooks] Current version: {currentVersion}");
+        
+        // Parse version (assumes format like "1.0.0" or "1.0.0.123")
+        var parts = currentVersion.Split('.');
+        if (parts.Length >= 3) {
+            int buildNumber = 0;
+            if (parts.Length > 3) {
+                int.TryParse(parts[3], out buildNumber);
+            }
+            buildNumber++;
+            
+            var newVersion = $"{parts[0]}.{parts[1]}.{parts[2]}.{buildNumber}";
+            PlayerSettings.bundleVersion = newVersion;
+            Debug.Log($"[BuildHooks] New version: {newVersion}");
+        }
+    }
+    
+    // Example: Prepare for WebGL deployment
+    public static void PrepareWebGLDeployment() {
+        Debug.Log("[BuildHooks] Preparing for WebGL deployment...");
+        // WebGL-specific settings
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
+        PlayerSettings.WebGL.template = "APPLICATION:Default";
+        // Add any other WebGL-specific configurations
+    }
+}
+*/
