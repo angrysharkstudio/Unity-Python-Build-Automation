@@ -465,7 +465,7 @@ Contributions welcome! Please:
 ## Support
 
 - [GitHub Issues](https://github.com/angrysharkstudio/Unity-Python-Build-Automation/issues)
-- [Blog Tutorial](https://angrysharkstudio.com/blog/python-unity-build-automation-tutorial?utm_source=github&utm_medium=readme&utm_campaign=unity_build_automation)
+- [Blog Tutorial](https://www.angry-shark-studio.com/blog/python-unity-build-automation-tutorial?utm_source=github&utm_medium=readme&utm_campaign=unity_build_automation)
 
 ---
 
