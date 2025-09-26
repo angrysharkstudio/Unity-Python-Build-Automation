@@ -64,6 +64,19 @@ def main() -> None:
             else:
                 console.print("\n[red]WebGL build or upload failed![/]")
         
+        elif choice == "windows_upload":
+            # Build Windows and upload to Google Drive
+            console.print("\n[cyan]Windows Build with Google Drive Upload[/]")
+            success, message = builder.build_windows_with_upload()
+            console.print(f"\n{message}")
+            
+            if success:
+                # Generate report
+                builder.generate_report()
+                console.print("\n[green]Windows build and upload completed![/]")
+            else:
+                console.print("\n[red]Windows build or upload failed![/]")
+        
         elif choice == "exit":
             console.print("\n[yellow]Goodbye![/]")
             sys.exit(0)

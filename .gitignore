@@ -143,5 +143,23 @@ build_report.html
 ehthumbs.db
 Thumbs.db
 
+# Google Drive credentials
+credentials.json
+token.json
+client_secrets.json
+*_service_account.json
+google_drive_token.pickle
+
+# Email templates (if containing sensitive info)
+email_templates/
+
+# Project-specific environment files
+.env.*
+
 # Never ignore
 !.env.example
+
+# Python virtual environments
+.venv/
+.env/
+BuildAutomation/gdrive_token.pickle

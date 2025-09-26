@@ -43,12 +43,27 @@ YourUnityProject/
 └── Builds/                 # Build outputs will go here
 ```
 
-### 2. Install Dependencies
+### 2. Create Virtual Environment (Recommended)
 
+Setting up a Python virtual environment ensures clean dependency management:
+
+**Windows:**
 ```bash
 cd YourUnityProject/BuildAutomation
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+**macOS/Linux:**
+```bash
+cd YourUnityProject/BuildAutomation
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Remember to activate the virtual environment before running build scripts!
 
 ### 3. Configure Unity Path
 
@@ -370,6 +385,44 @@ The script will:
 - Use FTPS (FTP over TLS) when possible: `WEBGL_FTP_USE_TLS=true`
 - Never commit `.env` files with passwords
 - Consider using deployment keys or CI/CD secrets for production
+
+## Windows Build Google Drive Upload
+
+Automatically upload Windows builds to Google Drive with email notifications.
+
+### Setup
+
+1. Follow the [Google Drive Credentials Setup Guide](GoogleCredentialsSetup.md)
+
+2. Configure in `.env`:
+```
+WINDOWS_GDRIVE_ENABLED=true
+GDRIVE_CREDENTIALS_FILE="credentials.json"
+GDRIVE_FOLDER_ID="your-folder-id"
+
+# Email notifications (optional)
+EMAIL_ENABLED=true
+EMAIL_SMTP_HOST="smtp.gmail.com"
+EMAIL_SMTP_PORT=587
+EMAIL_SMTP_USERNAME="your-email@gmail.com"
+EMAIL_SMTP_PASSWORD="your-app-password"
+EMAIL_FROM="your-email@gmail.com"
+EMAIL_TO="team@example.com"
+EMAIL_SUBJECT_PREFIX="MyProject"  # For multi-build setups
+```
+
+3. Build and upload:
+```bash
+python build_cli.py windows --gdrive-upload
+```
+
+### Features
+- Automatic zipping with intelligent exclusion of debug folders
+- Resumable uploads for large files
+- Email notifications with shareable download links
+- Support for multi-build workflows with email prefixes
+
+See [Multi-Build Setup Guide](BuildAutomation/examples/multi-build-setup/README.md) for advanced workflows.
 
 ## Troubleshooting
 

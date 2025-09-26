@@ -11,6 +11,7 @@ import subprocess
 import time
 import json
 from pathlib import Path
+from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Any
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
@@ -82,6 +83,16 @@ class PlatformBuilder:
         else:
             # For WebGL and other folder-based builds
             return platform_dir / self.config.project_name
+    
+    def _get_unity_output_path_with_name(self, platform: str, product_name: str, extension: str = "") -> Path:
+        """Get the path where Unity will output the build with a specific product name."""
+        platform_folder = self.PLATFORM_DIR_NAMES.get(platform, platform.capitalize())
+        platform_dir = self.config.project_root / "Builds" / platform_folder / self.config.project_version
+        if extension:
+            return platform_dir / f"{product_name}{extension}"
+        else:
+            # For WebGL and other folder-based builds
+            return platform_dir / product_name
     
     def _read_build_summary(self, platform: str) -> Optional[Dict[str, Any]]:
         """Read build summary JSON if available."""
@@ -203,6 +214,28 @@ class PlatformBuilder:
                     build_succeeded = build_summary.get('status') == 'success'
                     build_errors = build_summary.get('errors', [])
                     
+                    # Check if product name changed during build (e.g., by pre-build hook)
+                    if 'product_name' in build_summary:
+                        actual_product_name = build_summary['product_name']
+                        if actual_product_name != self.config.project_name:
+                            console.print(f"[yellow]Note: Product name changed from '{self.config.project_name}' to '{actual_product_name}' during build[/]")
+                            # Recalculate unity_output_path with the actual product name
+                            unity_output_path = self._get_unity_output_path_with_name(
+                                platform_name, 
+                                actual_product_name,
+                                platform_info['extension']
+                            )
+                            # Also update final output path to use the new product name
+                            timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M")
+                            folder_name = f"{self.config.project_version}_{timestamp}"
+                            platform_folder = self.PLATFORM_DIR_NAMES.get(platform_name, platform_name.lower())
+                            platform_dir = self.config.project_root / "Builds" / platform_folder / folder_name
+                            platform_dir.mkdir(parents=True, exist_ok=True)
+                            if platform_info['extension']:
+                                final_output_path = platform_dir / f"{actual_product_name}{platform_info['extension']}"
+                            else:
+                                final_output_path = platform_dir / actual_product_name
+                    
                     # Update build info if available
                     if build_succeeded and 'build_size_mb' in build_summary:
                         reported_size_mb = build_summary['build_size_mb']
@@ -214,27 +247,65 @@ class PlatformBuilder:
                     # Move build to timestamped folder
                     import shutil
                     if unity_output_path != final_output_path:
-                        if final_output_path.exists():
-                            if final_output_path.is_dir():
-                                shutil.rmtree(final_output_path)
+                        # Special handling for Windows builds
+                        if platform_name == 'windows':
+                            # Windows builds create multiple files in the version directory
+                            # We need to move all contents, not just the exe
+                            version_dir = unity_output_path.parent
+                            if version_dir.exists() and version_dir.is_dir():
+                                # Create the timestamped directory
+                                final_dir = final_output_path.parent
+                                final_dir.mkdir(parents=True, exist_ok=True)
+                                
+                                # Move all contents of version directory to timestamped directory
+                                for item in version_dir.iterdir():
+                                    dest = final_dir / item.name
+                                    if dest.exists():
+                                        if dest.is_dir():
+                                            shutil.rmtree(dest)
+                                        else:
+                                            dest.unlink()
+                                    shutil.move(str(item), str(dest))
+                                
+                                # Clean up empty version folder
+                                if version_dir.exists() and not any(version_dir.iterdir()):
+                                    version_dir.rmdir()
+                                    console.print(f"[dim]Cleaned up empty folder: {version_dir}[/]")
                             else:
-                                final_output_path.unlink()
-                        
-                        # Move the build to the timestamped folder
-                        shutil.move(str(unity_output_path), str(final_output_path))
-                        
-                        # Clean up empty version folder if it exists
-                        version_folder = unity_output_path.parent
-                        if version_folder.exists() and not any(version_folder.iterdir()):
-                            version_folder.rmdir()
-                            console.print(f"[dim]Cleaned up empty folder: {version_folder}[/]")
+                                # Fallback: just move the exe if that's all we have
+                                if final_output_path.exists():
+                                    if final_output_path.is_dir():
+                                        shutil.rmtree(final_output_path)
+                                    else:
+                                        final_output_path.unlink()
+                                shutil.move(str(unity_output_path), str(final_output_path))
+                        else:
+                            # For other platforms, use the original logic
+                            if final_output_path.exists():
+                                if final_output_path.is_dir():
+                                    shutil.rmtree(final_output_path)
+                                else:
+                                    final_output_path.unlink()
+                            
+                            # Move the build to the timestamped folder
+                            shutil.move(str(unity_output_path), str(final_output_path))
+                            
+                            # Clean up empty version folder if it exists
+                            version_folder = unity_output_path.parent
+                            if version_folder.exists() and not any(version_folder.iterdir()):
+                                version_folder.rmdir()
+                                console.print(f"[dim]Cleaned up empty folder: {version_folder}[/]")
                     
                     # Calculate size
-                    if final_output_path.is_file():
+                    if platform_name == 'windows':
+                        # Windows builds are now in a directory
+                        final_dir = final_output_path.parent
+                        size_mb = sum(f.stat().st_size for f in final_dir.rglob('*') if f.is_file()) / (1024 * 1024)
+                    elif final_output_path.is_file():
                         size_mb = final_output_path.stat().st_size / (1024 * 1024)
                     else:
-                        # For folders (WebGL)
-                        size_mb = sum(f.stat().st_size for f in final_output_path.rglob('*')) / (1024 * 1024)
+                        # For folders (WebGL, iOS)
+                        size_mb = sum(f.stat().st_size for f in final_output_path.rglob('*') if f.is_file()) / (1024 * 1024)
                     
                     progress.update(task, completed=100)
                     

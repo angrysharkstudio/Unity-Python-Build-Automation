@@ -35,15 +35,17 @@ def prompt_build_selection() -> str:
         "2": "all",
         "3": "custom",
         "4": "webgl_upload",
-        "5": "exit"
+        "5": "windows_upload",
+        "6": "exit"
     }
     
     console.print("\n[bold]What would you like to build?[/bold]")
     console.print("  [cyan]1.[/cyan] Windows only")
     console.print("  [cyan]2.[/cyan] All platforms")
     console.print("  [cyan]3.[/cyan] Custom selection")
-    console.print("  [cyan]4.[/cyan] WebGL build and upload")
-    console.print("  [cyan]5.[/cyan] Exit")
+    console.print("  [cyan]4.[/cyan] WebGL build and upload (FTP)")
+    console.print("  [cyan]5.[/cyan] Windows build and upload (Google Drive)")
+    console.print("  [cyan]6.[/cyan] Exit")
     
     while True:
         choice = Prompt.ask("\nEnter your choice", choices=list(choices.keys()))

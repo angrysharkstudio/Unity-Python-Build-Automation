@@ -260,3 +260,73 @@ result = subprocess.run(cmd, capture_output=False, text=True)
 ```
 
 This will show Unity's real-time output in your terminal.
+
+### 14. Virtual Environment Issues
+
+**Python packages not found:**
+- Ensure virtual environment is activated
+- Windows: `venv\Scripts\activate`
+- macOS/Linux: `source venv/bin/activate`
+- Reinstall requirements: `pip install -r requirements.txt`
+
+### 15. Google Drive Upload Issues
+
+**"credentials.json not found":**
+- Follow [Google Drive Credentials Setup Guide](GoogleCredentialsSetup.md)
+- Ensure credentials.json is in BuildAutomation folder
+- Never commit credentials.json to version control
+
+**"Invalid folder ID":**
+- Get folder ID from Google Drive URL: drive.google.com/drive/folders/[FOLDER_ID]
+- Ensure folder exists and you have access
+
+**Authentication errors:**
+- Delete gdrive_token.pickle and re-authenticate
+- Check that Google Drive API is enabled in your project
+- Verify OAuth consent screen is configured
+
+**Email not sending:**
+- Use app-specific password, not your regular password
+- Check SMTP settings match your provider
+- Verify firewall isn't blocking SMTP ports
+
+### 16. Multi-Build Configuration Issues
+
+**Wrong configuration active:**
+- Check which .env file is currently in use
+- Use switch scripts: `switch-to-recorder.bat` or `switch-to-vr.bat`
+
+**Email prefix not appearing:**
+- Verify EMAIL_SUBJECT_PREFIX is set in active .env
+- Check you're using latest windows_gdrive_uploader.py
+
+**Build hooks not working:**
+- Ensure BuildHooks.cs is in Assets/__Scripts/Editor/
+- Verify method names match PRE_BUILD_HOOK in .env
+- Check Unity console for hook execution errors
+
+### 17. Dynamic Product Name Changes
+
+The build automation system now supports changing the product name in pre-build hooks!
+
+**How it works:**
+- If your hook changes `PlayerSettings.productName`, the system will detect this
+- Output files will use the new product name
+- Zip files and emails will reflect the actual product name used
+
+**Example hook:**
+```csharp
+public static void SetDynamicProductName() {
+    PlayerSettings.productName = "MyGame - Dev Build";
+}
+```
+
+**Common use cases:**
+- Different names for different build variants
+- Adding build numbers or dates to product names
+- Branch-specific naming conventions
+
+**Troubleshooting:**
+- Look for yellow messages saying "Product name changed from X to Y"
+- Check that build_summary.json contains the actual product name
+- Verify output files use the new name

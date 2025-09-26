@@ -5,6 +5,12 @@ python-dotenv==1.0.0  # For loading Unity path from .env file
 rich==13.7.0          # For beautiful console output with icons, colors and formatting (Markdown)
 click==8.1.7          # For command-line interface
 
+# Google Drive upload dependencies
+google-api-python-client>=2.100.0  # Google Drive API client
+google-auth>=2.20.0                # Google authentication library
+google-auth-oauthlib>=1.0.0        # OAuth2 flow for installed apps
+google-auth-httplib2>=0.1.0        # HTTP transport for Google auth
+
 # Optional dependencies for future enhancements:
 # schedule>=1.2.0     # For scheduling automatic builds
 # requests>=2.31.0    # For webhooks and notifications
